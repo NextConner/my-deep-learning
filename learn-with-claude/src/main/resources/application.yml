@@ -10,16 +10,18 @@ spring:
     password: 123456
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
 
-
-DEEPSEEK_API_KEY: sk-5a95b401ad1d437b9530fe2dffd479e1
 
 # application.yml
 langchain4j:
   openai:              # ← 不是 open-ai
     chat-model:
       base-url: https://api.deepseek.com
-      api-key: ${DEEPSEEK_API_KEY:sk-5a95b401ad1d437b9530fe2dffd479e1}
+      api-key: ${DEEPSEEK_API_KEY}
       model-name: deepseek-chat
 

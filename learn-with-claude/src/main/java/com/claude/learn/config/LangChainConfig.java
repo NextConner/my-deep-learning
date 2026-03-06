@@ -1,6 +1,8 @@
 package com.claude.learn.config;
 
 import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.memory.ChatMemory;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
@@ -16,10 +18,10 @@ import javax.sql.DataSource;
 @Configuration
 public class LangChainConfig {
 
-    @Value("${DEEPSEEK_API_KEY:sk-5a95b401ad1d437b9530fe2dffd479e1}")
+    @Value("${DEEPSEEK_API_KEY}")
     private String apiKey;
 
-    @Value("${EMBEDDING_API_KEY:sk-5c101756cc4e4e328ef21e7980471aaf}")
+    @Value("${EMBEDDING_API_KEY}")
     private String embeddingApiKey;
 
 //    @Bean
@@ -56,6 +58,15 @@ public class LangChainConfig {
                 .build();
     }
 
+
+    /**
+     * LangChain4j 的 ChatMemory 用于在对话过程中保留上下文信息，增强模型的连续对话能力。
+     * @return
+     */
+    @Bean
+    public ChatMemory chatMemory() {
+        return MessageWindowChatMemory.withMaxMessages(10); // 保留最近10条对话
+    }
 
 
 }
