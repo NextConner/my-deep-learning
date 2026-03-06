@@ -41,4 +41,9 @@ public class AgentTools {
         return "当前" + city + "的天气是晴天，温度25摄氏度。";
     }
 
+    @Tool("发送邮件给指定收件人")
+    public String sendEmail(String recipient) {
+        // 模拟发送邮件
+        return "邮件已发送给：" + recipient;
+    }
 }
