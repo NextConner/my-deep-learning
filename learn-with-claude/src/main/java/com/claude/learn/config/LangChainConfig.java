@@ -4,6 +4,7 @@ import com.claude.learn.agent.AgentTools;
 import com.claude.learn.agent.OrchestratorAgent;
 import com.claude.learn.agent.PolicyAgent;
 import com.claude.learn.agent.SummaryAgent;
+import com.claude.learn.service.TokenMonitorService;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
@@ -24,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import javax.sql.DataSource;
 import java.util.Arrays;
@@ -137,31 +139,44 @@ public class LangChainConfig {
      * 可观测性
      */
     @Bean
-    public ChatModelListener chatModelListener() {
+    public ChatModelListener chatModelListener(TokenMonitorService tokenMonitorService) {
         return new ChatModelListener() {
+
             @Override
             public void onRequest(ChatModelRequestContext ctx) {
-                // 请求发出前：可以看到完整消息列表、工具列表
-                log.info("📤 LLM 请求发出");
-                log.info("   消息数：{}", ctx.request().messages().size());
-                log.info("   工具数：{}", ctx.request().toolSpecifications() != null ?
-                        ctx.request().toolSpecifications().size() : 0);
+                // 这里还在主线程，能拿到 SecurityContext
+                var auth = SecurityContextHolder.getContext().getAuthentication();
+                String username = auth != null ? auth.getName() : "anonymous";
+                ctx.attributes().put("username", username);  // ← 存入请求属性
+                log.info("📤 LLM 请求发出，用户：{}", username);
             }
 
             @Override
             public void onResponse(ChatModelResponseContext ctx) {
-                // 收到响应后：token 消耗、是否触发工具调用
-                log.info("📥 LLM 响应完成");
-                log.info("   完成原因：{}", ctx.response().finishReason());
-                log.info("   Token 消耗：{}", ctx.response().tokenUsage());
-                log.info("   是否触发工具：{}", ctx.response().aiMessage().hasToolExecutionRequests());
+                var tokenUsage = ctx.response().tokenUsage();
+                if (tokenUsage != null) {
+                    var auth = SecurityContextHolder.getContext().getAuthentication();
+                    String username = (String) ctx.attributes().getOrDefault("username", "anonymous");
+                    tokenMonitorService.record(
+                            username,
+                            tokenUsage.inputTokenCount(),
+                            tokenUsage.outputTokenCount()
+                    );
+                    log.info("📥 LLM 响应完成，用户 {}，Token 消耗：{}", username, tokenUsage.totalTokenCount());
+                }
             }
 
             @Override
             public void onError(ChatModelErrorContext ctx) {
                 log.error("❌ LLM 调用出错：{}", ctx.error().getMessage());
             }
+
+            private String getUsernameFromContext() {
+                // 从 Spring Security 上下文获取当前用户
+                var auth = org.springframework.security.core.context.SecurityContextHolder
+                        .getContext().getAuthentication();
+                return auth != null ? auth.getName() : "anonymous";
+            }
         };
     }
-
 }

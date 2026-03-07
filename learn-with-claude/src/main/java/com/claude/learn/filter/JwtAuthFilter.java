@@ -5,6 +5,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -20,6 +22,8 @@ import java.util.List;
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
+    private Logger log = LoggerFactory.getLogger(JwtAuthFilter.class);
+
     //注入
     private final JwtService jwtService;
 
@@ -31,22 +35,22 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        //放行登录接口
-        if(request.getServletPath().startsWith("/api/auth")){
-            filterChain.doFilter(request,response);
+        String path = request.getServletPath();
+        log.info("🔍 请求路径：{}", path);
+        //放行登录接口和静态资源
+        if (path.equals("/index.html")
+                || path.equals("/")
+                || path.startsWith("/api/auth")) {
+            filterChain.doFilter(request, response);
             return;
         }
 
         //从Header 获取token
         String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("{\"error\": \"Missing or invalid Authorization header\"}");
-            return;
-        }
-
         //提取token
-        String token = authHeader.substring(7);
+        String token = authHeader != null && authHeader.startsWith("Bearer ")
+                ? authHeader.substring(7)
+                : request.getParameter("token");  // ← SSE 走 query 参数
 
         //验证token
         if (!jwtService.isTokenValid(token)) {

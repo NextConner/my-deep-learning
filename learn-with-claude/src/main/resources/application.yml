@@ -11,10 +11,16 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
+  spring:
+    security:
+      strategy: MODE_INHERITABLETHREADLOCAL
   sql:
     init:
       mode: always
       schema-locations: classpath:schema.sql
+logging:
+  level:
+    org.springframework.security: DEBUG
 
 jwt:
   secret: K3v9mX8qR2tG7wP1nZ4sL6cB5jH0dFvN2yQ8uI3oA9xC6mV5nR7tG2wE9pL1qZ4sX6cB8jH0dFvN2yQ8uI3oA9x
