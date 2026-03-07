@@ -18,10 +18,10 @@ spring:
 
 
 # application.yml
-langchain4j:
-  openai:              # ← 不是 open-ai
-    chat-model:
-      base-url: https://api.deepseek.com
-      api-key: ${DEEPSEEK_API_KEY}
-      model-name: deepseek-chat
+#langchain4j:
+#  openai:              # ← 不是 open-ai
+#    chat-model:
+#      base-url: https://api.deepseek.com
+#      api-key: ${DEEPSEEK_API_KEY}
+#      model-name: deepseek-chat
 

@@ -1,6 +1,5 @@
 package com.claude.learn.agent;
 
-import com.claude.learn.listener.ToolObservabilityAspect;
 import com.claude.learn.service.HybridSearchService;
 import dev.langchain4j.agent.tool.Tool;
 import org.slf4j.Logger;
