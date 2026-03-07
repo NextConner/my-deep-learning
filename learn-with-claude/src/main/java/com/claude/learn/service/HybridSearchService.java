@@ -9,8 +9,6 @@ import dev.langchain4j.store.embedding.EmbeddingMatch;
 import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
 import dev.langchain4j.store.embedding.EmbeddingSearchResult;
 import dev.langchain4j.store.embedding.EmbeddingStore;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedHashMap;
@@ -33,14 +31,16 @@ public class HybridSearchService {
         this.repository = repository;
     }
 
+    public List<String> hybridSearch(String query, int topK) {
+        return hybridSearch(query, topK, null);
+    }
 
-    /**
-     *  混合检索：向量检索 + 关键词检索，结构融合返回
-     */
-    public List<String> hybridSearch(String query, int topK){
+    public List<String> hybridSearch(String query, int topK, HybridSearchFilter filter) {
 
-        //第一路：向量检索
-        Embedding queryEmbedding = embeddingModel .embed(query).content();
+        String source = filter != null ? filter.source() : null;
+        var fromTime = filter != null ? filter.fromTime() : null;
+
+        Embedding queryEmbedding = embeddingModel.embed(query).content();
         EmbeddingSearchRequest searchRequest = EmbeddingSearchRequest.builder()
                 .queryEmbedding(queryEmbedding)
                 .maxResults(topK)
@@ -49,28 +49,28 @@ public class HybridSearchService {
         EmbeddingSearchResult<TextSegment> searchResult = embeddingStore.search(searchRequest);
         List<EmbeddingMatch<TextSegment>> vectorMatches = searchResult.matches();
 
-        //第二路：关键词检索
-        List<DocumentSegment> keywordMatches = repository.fullTextSearch(query, topK);
+        List<DocumentSegment> keywordMatches = repository.fullTextSearchWithFilters(query, topK, source, fromTime);
 
-        //结果融合（RRF:倒数排名融合）
-        Map<String,Double> scoreMap = new LinkedHashMap<>();
+        Map<String, Double> scoreMap = new LinkedHashMap<>();
 
-        //向量检索结果打分
         for (int i = 0; i < vectorMatches.size(); i++) {
             EmbeddingMatch<TextSegment> match = vectorMatches.get(i);
             String content = match.embedded().text();
-            double rffScore = 1.0 / (60 + i + 1); // RRF打分，排名越靠前分数越高
-            scoreMap.merge(content, rffScore, Double::sum);
+
+            if (isFilteredOut(content, source, fromTime)) {
+                continue;
+            }
+
+            double rrfScore = 1.0 / (60 + i + 1);
+            scoreMap.merge(content, rrfScore, Double::sum);
         }
 
-        // 关键词检索结果打分
         for (int i = 0; i < keywordMatches.size(); i++) {
             String content = keywordMatches.get(i).getContent();
             double rrfScore = 1.0 / (60 + i + 1);
             scoreMap.merge(content, rrfScore, Double::sum);
         }
 
-        //按分数排序，取 topK
         return scoreMap.entrySet().stream()
                 .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
                 .limit(topK)
@@ -78,5 +78,10 @@ public class HybridSearchService {
                 .toList();
     }
 
-
+    private boolean isFilteredOut(String content, String source, java.time.LocalDateTime fromTime) {
+        if (source == null && fromTime == null) {
+            return false;
+        }
+        return repository.countByContentWithFilters(content, source, fromTime) == 0;
+    }
 }

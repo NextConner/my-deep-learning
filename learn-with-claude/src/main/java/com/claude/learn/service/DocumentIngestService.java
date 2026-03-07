@@ -42,12 +42,13 @@ public class DocumentIngestService {
     public void ingest(byte[] fileBytes, String filename) {
 
         log.info("Start ingest document: {}", filename);
+        String docType = resolveDocType(filename);
 
         Document document;
         try (var inputStream = new ByteArrayInputStream(fileBytes)) {
-            if (filename.endsWith(".pdf")) {
+            if ("pdf".equals(docType)) {
                 document = new ApachePdfBoxDocumentParser().parse(inputStream);
-            } else if (filename.endsWith(".docx")) {
+            } else if ("docx".equals(docType)) {
                 document = new ApachePoiDocumentParser().parse(inputStream);
             } else {
                 throw new IllegalArgumentException("Unsupported file type");
@@ -67,8 +68,15 @@ public class DocumentIngestService {
         for (TextSegment segment : segments) {
             Embedding embedding = embeddingModel.embed(segment).content();
             embeddingStore.add(embedding, segment);
-            repository.save(new DocumentSegment(segment.text(), filename));
+            repository.save(new DocumentSegment(segment.text(), filename, docType));
         }
         log.info("Document ingest completed: {}, stored {} segments", filename, segments.size());
+    }
+
+    private String resolveDocType(String filename) {
+        if (filename == null || !filename.contains(".")) {
+            return "";
+        }
+        return filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
     }
 }

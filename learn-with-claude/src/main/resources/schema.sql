@@ -53,3 +53,28 @@ INSERT INTO prompt_config (agent_name, system_prompt) VALUES (
 - 可以连续调用多个工具
 - 最后综合所有工具结果给出完整回答，不得编造工具未返回的信息'
 ) ON CONFLICT (agent_name) DO NOTHING;
+
+-- Table: public.rag_embeddings
+
+-- DROP TABLE IF EXISTS public.rag_embeddings;
+
+CREATE TABLE IF NOT EXISTS public.rag_embeddings
+(
+    embedding_id uuid NOT NULL,
+    embedding vector(1536),
+    text text COLLATE pg_catalog."default",
+    metadata json,
+    CONSTRAINT rag_embeddings_pkey PRIMARY KEY (embedding_id)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.rag_embeddings
+    OWNER to pgsql;
+-- metadata columns for iteration2
+ALTER TABLE IF EXISTS document_segments
+    ADD COLUMN IF NOT EXISTS doc_type VARCHAR(20);
+ALTER TABLE IF EXISTS document_segments
+    ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+CREATE INDEX IF NOT EXISTS idx_document_source ON document_segments(source);
+CREATE INDEX IF NOT EXISTS idx_document_created_at ON document_segments(created_at);
