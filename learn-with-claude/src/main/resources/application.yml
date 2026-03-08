@@ -1,0 +1,46 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: learn-from-claude
+  datasource:
+    url: jdbc:postgresql://172.30.44.143:5432/ragdb
+    username: pgsql
+    password: 123456
+  jpa:
+    hibernate:
+      ddl-auto: none
+  spring:
+    security:
+      strategy: MODE_INHERITABLETHREADLOCAL
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+logging:
+  level:
+    org.springframework.security: DEBUG
+
+jwt:
+  secret: K3v9mX8qR2tG7wP1nZ4sL6cB5jH0dFvN2yQ8uI3oA9xC6mV5nR7tG2wE9pL1qZ4sX6cB8jH0dFvN2yQ8uI3oA9x
+  expiration: 86400000  # 24小时，单位毫秒
+rag:
+  chunk:
+    max-segment-size: 300
+    max-overlap-size: 30
+
+agent:
+  runtime:
+    max-steps: 3
+    step-timeout-ms: 15000
+    retry-times: 1
+
+# application.yml
+#langchain4j:
+#  openai:              # ← 不是 open-ai
+#    chat-model:
+#      base-url: https://api.deepseek.com
+#      api-key: ${DEEPSEEK_API_KEY}
+#      model-name: deepseek-chat
+

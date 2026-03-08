@@ -1,3 +1,17 @@
 /java-ai-agent-monolith/.classpath
 /java-ai-agent-monolith/.factorypath
 /java-ai-agent-monolith/.project
+/java-ai-agent-monolith/.idea/
+/java-ai-agent-monolith/.settings/
+/java-ai-agent-monolith/.vscode/
+/java-ai-agent-monolith/target/
+/.idea/
+/learn-from-claude/.mvn/
+/learn-with-claude/.mvn/
+/learn-with-claude/target/
+/learn-from-claude.iml
+/java-ai-agent-monolith/java-ai-agent-monolith.iml
+/learn-with-claude.iml
+/learn-with-claude/.claude/settings.local.json
+/learn-with-claude/docs/
+/learn-with-claude/.claude/

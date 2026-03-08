@@ -1,0 +1,227 @@
+package com.claude.learn.controller;
+
+import com.claude.learn.agent.PolicyAgent;
+import com.claude.learn.agent.runtime.AgentRun;
+import com.claude.learn.agent.runtime.AgentRunStatus;
+import com.claude.learn.agent.runtime.AgentStep;
+import com.claude.learn.config.AgentRuntimeProperties;
+import com.claude.learn.service.AgentOrchestratorService;
+import com.claude.learn.service.PromptService;
+import com.claude.learn.service.TokenMonitorService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+@RestController
+@RequestMapping("/api")
+public class ChatController {
+
+    private static final Logger log = LoggerFactory.getLogger(ChatController.class);
+
+    private static final String DEFAULT_PROMPT = """
+            ����һ����ҵ�ڲ��������֣��������¹��߿���ʹ�ã�
+            1. searchPolicy����ѯ��˾�ڲ������ĵ�
+            2. getWeather����ѯ��������
+            ������û�������������������Щ���ߣ��ۺϽ�����������ش�
+            """;
+
+    private final PolicyAgent policyAgent;
+    private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+    private final TokenMonitorService tokenMonitorService;
+    private final PromptService promptService;
+    private final AgentOrchestratorService agentOrchestratorService;
+    private final AgentRuntimeProperties runtimeProperties;
+    private final ObjectMapper objectMapper;
+
+    public ChatController(PolicyAgent policyAgent,
+                          TokenMonitorService tokenMonitorService,
+                          PromptService promptService,
+                          AgentOrchestratorService agentOrchestratorService,
+                          AgentRuntimeProperties runtimeProperties,
+                          ObjectMapper objectMapper) {
+        this.policyAgent = policyAgent;
+        this.tokenMonitorService = tokenMonitorService;
+        this.promptService = promptService;
+        this.agentOrchestratorService = agentOrchestratorService;
+        this.runtimeProperties = runtimeProperties;
+        this.objectMapper = objectMapper;
+    }
+
+    @GetMapping("/usage")
+    public ResponseEntity<?> usage() {
+        String username = getCurrentUsername();
+        return ResponseEntity.ok(Map.of(
+                "username", username,
+                "summary", tokenMonitorService.getUsageSummary(username)
+        ));
+    }
+
+    @PostMapping("/chat")
+    public ResponseEntity<?> chat(@RequestBody ChatRequest request) {
+
+        String username = getCurrentUsername();
+        log.info("Received chat request - username: {}, message: {}", username, request.message());
+
+        if (tokenMonitorService.isExceeded(username)) {
+            log.warn("Token quota exceeded - username: {}", username);
+            return ResponseEntity.status(429)
+                    .body(Map.of("error", "���� Token ��������꣬����������"));
+        }
+
+        String systemPrompt = promptService.getPrompt("policy_agent", DEFAULT_PROMPT);
+        AgentRun run = agentOrchestratorService.run(username, request.message(), systemPrompt);
+
+        if (run.getStatus() == AgentRunStatus.SUCCESS) {
+            log.info("Chat request completed successfully - username: {}, runId: {}, latency: {}ms",
+                    username, run.getRunId(), run.totalLatencyMs());
+
+            if (runtimeProperties.isIncludeTraceInResponse()) {
+                return ResponseEntity.ok(ChatResponse.from(run, true));
+            } else {
+                return ResponseEntity.ok(Map.of("answer", run.getFinalAnswer()));
+            }
+        }
+
+        log.error("Chat request failed - username: {}, runId: {}, status: {}, steps: {}",
+                username, run.getRunId(), run.getStatus(), run.getSteps().size());
+
+        if (runtimeProperties.isIncludeTraceInResponse()) {
+            return ResponseEntity.status(500).body(ChatResponse.from(run, true));
+        } else {
+            return ResponseEntity.status(500)
+                    .body(Map.of(
+                            "error", "Agent execution failed",
+                            "runId", run.getRunId()
+                    ));
+        }
+    }
+
+    @GetMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter stream(@RequestParam String message) {
+
+        String username = getCurrentUsername();
+        log.info("Received streaming chat request - username: {}, message: {}", username, message);
+
+        if (tokenMonitorService.isExceeded(username)) {
+            log.warn("Token quota exceeded for streaming request - username: {}", username);
+            SseEmitter emitter = new SseEmitter();
+            try {
+                emitter.send(SseEmitter.event()
+                        .name("error")
+                        .data(new AgentStreamEvent.ErrorEvent(null, "Token quota exceeded", "QUOTA_EXCEEDED")));
+                emitter.complete();
+            } catch (IOException e) {
+                log.error("Error sending quota exceeded message", e);
+                emitter.completeWithError(e);
+            }
+            return emitter;
+        }
+
+        SecurityContext context = SecurityContextHolder.getContext();
+        SseEmitter emitter = new SseEmitter(60_000L);
+
+        executor.submit(() -> {
+            SecurityContextHolder.setContext(context);
+            try {
+                log.debug("Starting streaming response with orchestrator - username: {}", username);
+
+                String systemPrompt = promptService.getPrompt("policy_agent", DEFAULT_PROMPT);
+                AgentRun run = agentOrchestratorService.run(username, message, systemPrompt);
+
+                // Emit step events
+                for (AgentStep step : run.getSteps()) {
+                    emitter.send(SseEmitter.event()
+                            .name("step_start")
+                            .data(new AgentStreamEvent.StepStartEvent(
+                                    step.getStepId(),
+                                    step.getSequence(),
+                                    step.getToolName(),
+                                    step.getInputSummary()
+                            )));
+
+                    emitter.send(SseEmitter.event()
+                            .name("step_complete")
+                            .data(new AgentStreamEvent.StepCompleteEvent(
+                                    step.getStepId(),
+                                    step.getSequence(),
+                                    step.getStatus().name(),
+                                    step.latencyMs(),
+                                    step.getOutputSummary()
+                            )));
+                }
+
+                // Check if run was successful
+                if (run.getStatus() == AgentRunStatus.SUCCESS) {
+                    // Stream the final answer token by token
+                    String answer = run.getFinalAnswer();
+                    if (answer != null) {
+                        for (char c : answer.toCharArray()) {
+                            emitter.send(SseEmitter.event()
+                                    .name("token")
+                                    .data(String.valueOf(c)));
+                        }
+                    }
+
+                    emitter.send(SseEmitter.event()
+                            .name("complete")
+                            .data(new AgentStreamEvent.CompleteEvent(
+                                    run.getRunId(),
+                                    answer,
+                                    run.getSteps().size(),
+                                    run.totalLatencyMs()
+                            )));
+
+                    log.info("Streaming response completed successfully - username: {}, runId: {}", username, run.getRunId());
+                    emitter.complete();
+                } else {
+                    emitter.send(SseEmitter.event()
+                            .name("error")
+                            .data(new AgentStreamEvent.ErrorEvent(
+                                    run.getRunId(),
+                                    "Agent execution failed",
+                                    run.getStatus().name()
+                            )));
+                    log.error("Streaming response failed - username: {}, runId: {}, status: {}", username, run.getRunId(), run.getStatus());
+                    emitter.complete();
+                }
+            } catch (Exception e) {
+                log.error("Unexpected error in streaming response - username: {}", username, e);
+                try {
+                    emitter.send(SseEmitter.event()
+                            .name("error")
+                            .data(new AgentStreamEvent.ErrorEvent(null, e.getMessage(), "INTERNAL_ERROR")));
+                } catch (IOException ex) {
+                    log.error("Error sending error event", ex);
+                }
+                emitter.completeWithError(e);
+            } finally {
+                SecurityContextHolder.clearContext();
+            }
+        });
+        return emitter;
+    }
+
+    public record ChatRequest(String message) {
+    }
+
+    private String getCurrentUsername() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null ? auth.getName() : "anonymous";
+    }
+}

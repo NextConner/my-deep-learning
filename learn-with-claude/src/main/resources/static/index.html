@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>企业智能助手</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+
+        .upload-btn {
+  background: none;
+  border: 1px solid #4f46e5;
+  color: #4f46e5;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.upload-btn:hover { background: #4f46e5; color: white; }
+
+.upload-status { font-size: 13px; }
+.upload-status.success { color: #22c55e; }
+.upload-status.error { color: #ef4444; }
+.upload-status.loading { color: #999; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+          font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+          background: #f0f2f5;
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        /* 登录页 */
+        .login-box {
+          background: white;
+          border-radius: 12px;
+          padding: 40px;
+          width: 380px;
+          box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+        }
+
+        .login-box h2 {
+          text-align: center;
+          margin-bottom: 32px;
+          color: #1a1a2e;
+          font-size: 22px;
+        }
+
+        .form-item { margin-bottom: 16px; }
+
+        .form-item label {
+          display: block;
+          font-size: 13px;
+          color: #666;
+          margin-bottom: 6px;
+        }
+
+        .form-item input {
+          width: 100%;
+          padding: 10px 14px;
+          border: 1px solid #e0e0e0;
+          border-radius: 8px;
+          font-size: 14px;
+          outline: none;
+          transition: border-color 0.2s;
+        }
+
+        .form-item input:focus { border-color: #4f46e5; }
+
+        .login-btn {
+          width: 100%;
+          padding: 12px;
+          background: #4f46e5;
+          color: white;
+          border: none;
+          border-radius: 8px;
+          font-size: 15px;
+          cursor: pointer;
+          margin-top: 8px;
+          transition: background 0.2s;
+        }
+
+        .login-btn:hover { background: #4338ca; }
+
+        .login-error {
+          color: #ef4444;
+          font-size: 13px;
+          text-align: center;
+          margin-top: 12px;
+        }
+
+        /* 聊天页 */
+        .chat-page {
+          width: 860px;
+          height: 90vh;
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        }
+
+        .chat-header {
+          padding: 16px 24px;
+          border-bottom: 1px solid #f0f0f0;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .chat-header h3 { color: #1a1a2e; font-size: 16px; }
+
+        .logout-btn {
+          background: none;
+          border: 1px solid #e0e0e0;
+          padding: 6px 14px;
+          border-radius: 6px;
+          font-size: 13px;
+          cursor: pointer;
+          color: #666;
+          transition: all 0.2s;
+        }
+
+        .logout-btn:hover { border-color: #ef4444; color: #ef4444; }
+
+        .messages {
+          flex: 1;
+          overflow-y: auto;
+          padding: 24px;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        .message {
+          display: flex;
+          gap: 10px;
+          align-items: flex-start;
+          animation: fadeIn 0.3s ease;
+        }
+
+        .message.user { flex-direction: row-reverse; }
+
+        .avatar {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 16px;
+          flex-shrink: 0;
+          background: #f0f0f0;
+        }
+
+        .message.user .avatar { background: #4f46e5; }
+
+        .bubble {
+          max-width: 70%;
+          padding: 12px 16px;
+          border-radius: 12px;
+          font-size: 14px;
+          line-height: 1.8;
+          white-space: pre-wrap;
+        }
+
+        .message.user .bubble {
+          background: #4f46e5;
+          color: white;
+          border-top-right-radius: 4px;
+        }
+
+        .message.ai .bubble {
+          background: #f7f7f8;
+          color: #1a1a2e;
+          border-top-left-radius: 4px;
+        }
+
+        .typing::after {
+          content: '▋';
+          animation: blink 1s infinite;
+        }
+
+        .chat-input {
+          padding: 16px 24px;
+          border-top: 1px solid #f0f0f0;
+          display: flex;
+          gap: 10px;
+        }
+
+        .chat-input input {
+          flex: 1;
+          padding: 10px 16px;
+          border: 1px solid #e0e0e0;
+          border-radius: 24px;
+          font-size: 14px;
+          outline: none;
+          transition: border-color 0.2s;
+        }
+
+        .chat-input input:focus { border-color: #4f46e5; }
+
+        .send-btn {
+          padding: 10px 24px;
+          background: #4f46e5;
+          color: white;
+          border: none;
+          border-radius: 24px;
+          font-size: 14px;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+
+        .send-btn:hover { background: #4338ca; }
+        .send-btn:disabled { background: #c7c7c7; cursor: not-allowed; }
+
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+        .bubble p { margin-bottom: 8px; }
+.bubble p:last-child { margin-bottom: 0; }
+.bubble strong { font-weight: 600; }
+.bubble ul, .bubble ol {
+  padding-left: 20px;
+  margin-bottom: 8px;
+}
+.bubble li { margin-bottom: 4px; }
+.bubble code {
+  background: rgba(0,0,0,0.06);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 13px;
+}
+.bubble pre {
+  background: rgba(0,0,0,0.06);
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin-bottom: 8px;
+}
+        .token-usage {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 6px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  transition: border-color 0.2s;
+}
+
+.token-usage:hover { border-color: #4f46e5; }
+
+.token-label {
+  font-size: 12px;
+  color: #999;
+  white-space: nowrap;
+}
+
+.token-blocks {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.token-block {
+  width: 10px;
+  height: 16px;
+  border-radius: 2px;
+  background: #e0e0e0;
+  transition: background 0.3s;
+}
+
+.token-block.low    { background: #22c55e; }  /* 0-60%  绿色 */
+.token-block.medium { background: #f59e0b; }  /* 60-80% 黄色 */
+.token-block.high   { background: #ef4444; }  /* 80%+   红色 */
+
+.token-percent {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  min-width: 36px;
+}
+    </style>
+</head>
+<body>
+<div id="app">
+
+    <!-- 登录页 -->
+    <div class="login-box" v-if="!token">
+        <h2>🤖 企业智能助手</h2>
+        <div class="form-item">
+            <label>用户名</label>
+            <input v-model="username" type="text" placeholder="请输入用户名"
+                   @keydown.enter="login"/>
+        </div>
+        <div class="form-item">
+            <label>密码</label>
+            <input v-model="password" type="password" placeholder="请输入密码"
+                   @keydown.enter="login"/>
+        </div>
+        <button class="login-btn" @click="login" :disabled="logging">
+            {{ logging ? '登录中...' : '登 录' }}
+        </button>
+        <div class="login-error" v-if="loginError">{{ loginError }}</div>
+    </div>
+
+    <!-- 聊天页 -->
+    <div class="chat-page" v-else>
+        <div class="chat-header">
+            <h3>🤖 企业智能助手</h3>
+            <div style="display:flex;gap:16px;align-items:center;">
+
+            <!-- Token 用量显示 -->
+                <div class="token-usage" @click="fetchUsage" title="点击刷新">
+                    <span class="token-label">今日用量</span>
+                    <div class="token-blocks">
+                        <div
+                                v-for="i in 10"
+                                :key="i"
+                                :class="['token-block', getBlockClass(i)]"
+                        ></div>
+                    </div>
+                    <span class="token-percent">{{ usagePercent }}%</span>
+                </div>
+
+                <input ref="fileInput" type="file" accept=".pdf,.doc,.docx"
+                       style="display:none" @change="uploadFile" />
+                <button class="upload-btn" @click="$refs.fileInput.click()">📄 上传文档</button>
+                <span v-if="uploadStatus" :class="['upload-status', uploadStatusType]">
+      {{ uploadStatus }}
+    </span>
+                <button class="logout-btn" @click="logout">退出登录</button>
+            </div>
+        </div>
+
+        <div class="messages" ref="messagesEl">
+            <div
+                    v-for="(msg, idx) in messages"
+                    :key="idx"
+                    :class="['message', msg.role]"
+            >
+                <div class="avatar">{{ msg.role === 'user' ? '👤' : '🤖' }}</div>
+                <div
+                        :class="['bubble', { typing: msg.typing }]"
+                        v-html="msg.role === 'ai' ? renderMarkdown(msg.text) : msg.text"
+                ></div>
+            </div>
+        </div>
+
+        <div class="chat-input">
+            <input
+                    v-model="inputText"
+                    placeholder="请输入问题，按 Enter 发送..."
+                    @keydown.enter="ask"
+                    :disabled="sending"
+            />
+            <button class="send-btn" @click="ask" :disabled="sending">发送</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const { createApp, ref, nextTick } = Vue;
+
+createApp({
+  setup() {
+    const token = ref(localStorage.getItem('token') || '');
+    const username = ref('admin');
+    const password = ref('123456');
+    const loginError = ref('');
+    const logging = ref(false);
+    const messages = ref([]);
+    const inputText = ref('');
+    const sending = ref(false);
+    const messagesEl = ref(null);
+    const uploadStatus = ref('');
+    const uploadStatusType = ref('');
+    const fileInput = ref(null);
+    const usagePercent = ref(0);
+    const usedTokens = ref(0);
+    const limitTokens = ref(10000);
+
+    async function fetchUsage() {
+      try {
+        const res = await fetch('/api/usage', {
+          headers: { 'Authorization': `Bearer ${token.value}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const match = data.summary.match(/(\d+)\s*\/\s*(\d+)/);
+          if (match) {
+            usedTokens.value = parseInt(match[1]);
+            limitTokens.value = parseInt(match[2]);
+            usagePercent.value = Math.min(
+              Math.round(usedTokens.value / limitTokens.value * 100), 100
+            );
+          }
+        }
+      } catch (e) {
+        console.error('获取用量失败', e);
+      }
+    }
+
+    function getBlockClass(i) {
+      const threshold = usagePercent.value / 10;
+      if (i > threshold) return '';
+      if (usagePercent.value < 60) return 'low';
+      if (usagePercent.value < 80) return 'medium';
+      return 'high';
+    }
+
+    async function uploadFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      uploadStatus.value = '上传中...';
+      uploadStatusType.value = 'loading';
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        const res = await fetch('/api/document/upload', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token.value}` },
+          body: formData
+        });
+        if (res.ok) {
+          const data = await res.json();
+          uploadStatus.value = `✅ ${data.filename} 上传成功`;
+          uploadStatusType.value = 'success';
+        } else {
+          uploadStatus.value = '❌ 上传失败';
+          uploadStatusType.value = 'error';
+        }
+      } catch (e) {
+        uploadStatus.value = '❌ 网络异常';
+        uploadStatusType.value = 'error';
+      } finally {
+        setTimeout(() => { uploadStatus.value = ''; }, 3000);
+        event.target.value = '';
+      }
+    }
+
+    async function login() {
+      loginError.value = '';
+      logging.value = true;
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: username.value,
+            password: password.value
+          })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          token.value = data.token;
+          localStorage.setItem('token', data.token);
+          await fetchUsage();
+        } else {
+          loginError.value = '用户名或密码错误，请重试';
+        }
+      } catch (e) {
+        loginError.value = '网络异常，请稍后再试';
+      } finally {
+        logging.value = false;
+      }
+    }
+
+    function renderMarkdown(text) {
+      if (!text) return '';
+      return marked.parse(text);
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      token.value = '';
+      messages.value = [];
+    }
+
+    async function scrollToBottom() {
+      await nextTick();
+      if (messagesEl.value) {
+        messagesEl.value.scrollTop = messagesEl.value.scrollHeight;
+      }
+    }
+
+    async function ask() {
+      const msg = inputText.value.trim();
+      if (!msg || sending.value) return;
+
+      inputText.value = '';
+      sending.value = true;
+
+      messages.value.push({ role: 'user', text: msg });
+      await scrollToBottom();
+
+      const aiMsg = { role: 'ai', text: '', typing: true };
+      messages.value.push(aiMsg);
+      await scrollToBottom();
+
+      let buffer = '';
+      const evtSource = new EventSource(
+        `/api/chat/stream?message=${encodeURIComponent(msg)}&token=${encodeURIComponent(token.value)}`
+      );
+
+      evtSource.onmessage = async (event) => {
+        aiMsg.typing = false;
+        buffer += event.data;
+        const breakChars = ['。', '！', '？', '；', '\n'];
+        if (breakChars.some(c => buffer.endsWith(c))) {
+          aiMsg.text += buffer + '\n';
+          buffer = '';
+          await scrollToBottom();
+        }
+      };
+
+      evtSource.onerror = async () => {
+        if (buffer) { aiMsg.text += buffer; buffer = ''; }
+        aiMsg.typing = false;
+        evtSource.close();
+        sending.value = false;
+        await fetchUsage();
+        await scrollToBottom();
+      };
+    }
+
+    // 如果已有 token，初始化时拉取用量
+    if (token.value) fetchUsage();
+
+    return {
+      token, username, password, loginError, logging,
+      messages, inputText, sending, messagesEl,
+      uploadStatus, uploadStatusType, fileInput,
+      usagePercent, usedTokens, limitTokens,
+      login, logout, ask, renderMarkdown,
+      uploadFile, fetchUsage, getBlockClass
+    };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

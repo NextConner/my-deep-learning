@@ -1,0 +1,75 @@
+package com.claude.learn.filter;
+
+import com.claude.learn.service.JwtService;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+import java.util.List;
+
+/**
+ * 一次性身份验证过滤器
+ */
+@Component
+public class JwtAuthFilter extends OncePerRequestFilter {
+
+    private Logger log = LoggerFactory.getLogger(JwtAuthFilter.class);
+
+    //注入
+    private final JwtService jwtService;
+
+    public JwtAuthFilter(JwtService jwtService) {
+        this.jwtService = jwtService;
+    }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
+
+        String path = request.getServletPath();
+        log.info("🔍 请求路径：{}", path);
+        //放行登录接口和静态资源
+        if (path.equals("/index.html")
+                || path.equals("/")
+                || path.startsWith("/api/auth")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        //从Header 获取token
+        String authHeader = request.getHeader("Authorization");
+        //提取token
+        String token = authHeader != null && authHeader.startsWith("Bearer ")
+                ? authHeader.substring(7)
+                : request.getParameter("token");  // ← SSE 走 query 参数
+
+        //验证token
+        if (!jwtService.isTokenValid(token)) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("{\"error\": \"Invalid or expired token\"}");
+            return;
+        }
+
+        //token 合法，设置认证信息到SecurityContext（如果需要）
+        String userName = jwtService.extractUsername(token);
+        UsernamePasswordAuthenticationToken authToke = new UsernamePasswordAuthenticationToken(
+                userName,null, List.of()
+        );
+        authToke.setDetails(new WebAuthenticationDetailsSource()
+                .buildDetails(request));
+        //设置认证信息到上下文
+        SecurityContextHolder.getContext().setAuthentication(authToke);
+
+        filterChain.doFilter(request,response);
+    }
+
+}
