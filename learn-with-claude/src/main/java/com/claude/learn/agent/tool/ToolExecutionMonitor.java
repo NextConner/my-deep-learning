@@ -100,9 +100,9 @@ public class ToolExecutionMonitor {
     /**
      * 获取实时监控仪表板数据
      */
-    public Map<String, Object> getDashboard() {
+    public Map<String, Map> getDashboard() {
         Map<String, ToolExecutionStats> allStats = toolExecutionWrapper.getAllStats();
-        Map<String, Map<String, Object>> dashboard = new HashMap<>();
+        Map<String, Map> dashboard = new HashMap<>();
         
         for (ToolExecutionStats stats : allStats.values()) {
             Map<String, Object> toolMetrics = new HashMap<>();
