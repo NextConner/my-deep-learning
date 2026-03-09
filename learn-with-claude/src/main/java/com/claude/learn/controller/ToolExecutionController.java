@@ -41,7 +41,7 @@ public class ToolExecutionController {
      * 获取监控仪表板数据
      */
     @GetMapping("/dashboard")
-    public Map<String, Object> dashboard() {
+    public Map<String, Map> dashboard() {
         return toolExecutionMonitor.getDashboard();
     }
 

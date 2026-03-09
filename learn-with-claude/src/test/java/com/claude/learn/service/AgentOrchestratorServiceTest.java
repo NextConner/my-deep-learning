@@ -5,11 +5,13 @@ import com.claude.learn.agent.PolicyAgent;
 import com.claude.learn.agent.runtime.AgentRun;
 import com.claude.learn.agent.runtime.AgentRunStatus;
 import com.claude.learn.config.AgentRuntimeProperties;
+import com.claude.learn.filter.LocalQueryRouter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -29,6 +31,9 @@ class AgentOrchestratorServiceTest {
 
     private AgentOrchestratorService orchestratorService;
 
+    @Autowired
+    private LocalQueryRouter localQueryRouter;
+
     @BeforeEach
     void setUp() {
         lenient().when(runtimeProperties.getMaxSteps()).thenReturn(3);
@@ -39,7 +44,7 @@ class AgentOrchestratorServiceTest {
             String q = invocation.getArgument(0);
             return "{\"tasks\":[{\"type\":\"none\",\"query\":\"" + q + "\"}]}";
         });
-        orchestratorService = new AgentOrchestratorService(policyAgent, orchestratorAgent, runtimeProperties);
+        orchestratorService = new AgentOrchestratorService(policyAgent, orchestratorAgent, runtimeProperties,localQueryRouter);
     }
 
     @Test

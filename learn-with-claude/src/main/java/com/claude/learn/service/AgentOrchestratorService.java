@@ -4,13 +4,16 @@ import com.claude.learn.agent.PolicyAgent;
 import com.claude.learn.agent.runtime.AgentErrorCode;
 import com.claude.learn.agent.runtime.AgentRun;
 import com.claude.learn.agent.runtime.AgentStep;
+import com.claude.learn.config.AgentMetrics;
 import com.claude.learn.config.AgentRuntimeProperties;
 import com.claude.learn.agent.OrchestratorAgent;
+import com.claude.learn.filter.LocalQueryRouter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.ExecutorService;
@@ -50,13 +53,20 @@ public class AgentOrchestratorService {
     private final ObjectMapper objectMapper = new ObjectMapper();
     // 使用Virtual Thread执行器，Java 21新特性，轻量级线程，适合高并发场景
     private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+    //本地路由
+    private final LocalQueryRouter localQueryRouter;
+    //
+    @Autowired
+    private AgentMetrics agentMetrics;
 
     public AgentOrchestratorService(PolicyAgent policyAgent,
             OrchestratorAgent orchestratorAgent,
-            AgentRuntimeProperties runtimeProperties) {
+            AgentRuntimeProperties runtimeProperties,
+            LocalQueryRouter localQueryRouter) {
         this.policyAgent = policyAgent;
         this.orchestratorAgent = orchestratorAgent;
         this.runtimeProperties = runtimeProperties;
+        this.localQueryRouter = localQueryRouter;
     }
 
     /**
@@ -68,6 +78,7 @@ public class AgentOrchestratorService {
      * @return AgentRun 包含完整执行轨迹的运行记录
      */
     public AgentRun run(String username, String userMessage, String systemPrompt) {
+
         AgentRun run = new AgentRun(username, userMessage);
         String traceId = run.getRunId();
 
@@ -77,6 +88,17 @@ public class AgentOrchestratorService {
         MDC.put("username", username);
 
         try {
+
+            // 本地小模型先做路由判断，不消耗 Deepseek token
+            if (!localQueryRouter.needsRetrieval(userMessage)) {
+                // 直接走模型回答，跳过整个 RAG 流程
+                String answer = policyAgent.chat(userMessage, systemPrompt);
+                run.markSuccess(answer);
+                //todo 测试数据
+                agentMetrics.recordSuccess(3000L);
+                return run;
+            }
+
             log.info("Starting agent run - runId: {}, question: {}", traceId, summarize(userMessage));
 
             // Plan阶段：调用 OrchestratorAgent 拆解任务并选择工具
@@ -89,6 +111,8 @@ public class AgentOrchestratorService {
                     step.start();
                     observe(step, aggregated);
                     run.markSuccess(aggregated);
+                    //todo 测试数据
+                    agentMetrics.recordSuccess(3000L);
                     log.info("Agent run completed successfully (multi-task) - runId: {}, totalSteps: {}, latency: {}ms",
                             traceId, run.getSteps().size(), run.totalLatencyMs());
                     return run;
@@ -136,6 +160,7 @@ public class AgentOrchestratorService {
             guardStep.start();
             guardStep.markFailed(AgentErrorCode.MAX_STEPS_EXCEEDED, "Agent reached max steps without a valid answer");
             run.markFailed();
+            agentMetrics.recordFailure();
             return run;
         } finally {
             // 清理MDC，避免内存泄漏和上下文污染

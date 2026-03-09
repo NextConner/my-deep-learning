@@ -44,3 +44,56 @@ agent:
 #      api-key: ${DEEPSEEK_API_KEY}
 #      model-name: deepseek-chat
 
+langchain4j:
+  ollama:
+    chat-model:
+      base-url: http://localhost:11434
+      model-name: llama3.2:3b
+      temperature: 0.0  # 路由判断要确定性输出，温度设为0
+      timeout: PT10S    # 本地模型响应快，10秒足够
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus,health,metrics
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  tracing:
+    sampling:
+      probability: 1.0  # 开发环境全采样，生产环境改成 0.1
+zipkin:
+  tracing:
+    endpoint: http://localhost:9411/api/v2/spans
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      deepseek:
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+        sliding-window-size: 10
+        register-health-indicator: true
+
+app:
+  models:
+    primary:
+      provider: openai-compatible  # openai-compatible | anthropic
+      base-url: https://api.deepseek.com
+      api-key: ${DEEPSEEK_API_KEY}
+      model-name: deepseek-chat
+      max-tokens: 4096
+    fallback:
+      provider: openai-compatible
+      base-url: http://localhost:11434/v1
+      api-key: ollama
+      model-name: llama3.2:3b
+      max-tokens: 2048
+    back:
+      provider: anthropic
+      api-key: ${ANTHROPIC_API_KEY}
+      model-name: claude-sonnet-4-6
+      max-tokens: 4096
