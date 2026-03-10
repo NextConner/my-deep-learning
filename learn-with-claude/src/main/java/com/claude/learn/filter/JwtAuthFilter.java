@@ -45,12 +45,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        //从Header 获取token
-        String authHeader = request.getHeader("Authorization");
-        //提取token
-        String token = authHeader != null && authHeader.startsWith("Bearer ")
-                ? authHeader.substring(7)
-                : request.getParameter("token");  // ← SSE 走 query 参数
+        String token = resolveBearerToken(request);
 
         //验证token
         if (!jwtService.isTokenValid(token)) {
@@ -70,6 +65,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         SecurityContextHolder.getContext().setAuthentication(authToke);
 
         filterChain.doFilter(request,response);
+    }
+
+    private String resolveBearerToken(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+        }
+        return null;
     }
 
 }
