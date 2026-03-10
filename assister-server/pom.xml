@@ -11,7 +11,7 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.jinda</groupId>
-  <artifactId>learn-with-claude</artifactId>
+  <artifactId>assister-server</artifactId>
   <packaging>jar</packaging>
   <version>1.0-SNAPSHOT</version>
   <name>learn-with-claude</name>
