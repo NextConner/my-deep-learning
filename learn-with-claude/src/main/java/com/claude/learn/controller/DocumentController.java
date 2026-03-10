@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -22,6 +23,7 @@ public class DocumentController {
     @Autowired
     DocumentIngestService documentIngestService;
 
+    @PreAuthorize("hasAnyRole('AI_ADMIN', 'AI_OPS')")
     @PostMapping("/upload")
     public ResponseEntity<?> upload(@RequestParam("file") MultipartFile file) {
         try {

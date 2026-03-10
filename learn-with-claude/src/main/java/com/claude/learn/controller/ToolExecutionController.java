@@ -1,6 +1,7 @@
 package com.claude.learn.controller;
 
 import com.claude.learn.agent.tool.ToolExecutionMonitor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
@@ -32,6 +33,7 @@ public class ToolExecutionController {
     /**
      * 检查工具健康状态
      */
+    @PreAuthorize("hasAnyRole('AI_ADMIN', 'AI_OPS')")
     @GetMapping("/health")
     public Map<String, Object> health() {
         return toolExecutionMonitor.checkHealth();
@@ -40,6 +42,7 @@ public class ToolExecutionController {
     /**
      * 获取监控仪表板数据
      */
+    @PreAuthorize("hasAnyRole('AI_ADMIN', 'AI_OPS')")
     @GetMapping("/dashboard")
     public Map<String, Map> dashboard() {
         return toolExecutionMonitor.getDashboard();
@@ -48,6 +51,7 @@ public class ToolExecutionController {
     /**
      * 获取配置建议
      */
+    @PreAuthorize("hasAnyRole('AI_ADMIN', 'AI_OPS')")
     @GetMapping("/recommendations")
     public Map<String, Object> recommendations() {
         return toolExecutionMonitor.getRecommendations();
@@ -56,6 +60,7 @@ public class ToolExecutionController {
     /**
      * 重置特定工具的统计信息
      */
+    @PreAuthorize("hasRole('AI_ADMIN')")
     @PostMapping("/{toolName}/reset-stats")
     public Map<String, String> resetStats(@PathVariable String toolName) {
         toolExecutionMonitor.resetStats(toolName);
