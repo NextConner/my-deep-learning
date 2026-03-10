@@ -1,13 +1,13 @@
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
 
 spring:
   application:
     name: learn-from-claude
   datasource:
-    url: jdbc:postgresql://172.30.44.143:5432/ragdb
-    username: pgsql
-    password: 123456
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/ragdb}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
   jpa:
     hibernate:
       ddl-auto: none
@@ -23,7 +23,7 @@ logging:
     org.springframework.security: DEBUG
 
 jwt:
-  secret: K3v9mX8qR2tG7wP1nZ4sL6cB5jH0dFvN2yQ8uI3oA9xC6mV5nR7tG2wE9pL1qZ4sX6cB8jH0dFvN2yQ8uI3oA9x
+  secret: ${JWT_SECRET:change-me-in-production}
   expiration: 86400000  # 24小时，单位毫秒
 rag:
   chunk:
@@ -38,19 +38,19 @@ agent:
 
 # application.yml
 #langchain4j:
-#  openai:              # ← 不是 open-ai
+#  openai:              # 不是 open-ai
 #    chat-model:
-#      base-url: https://api.deepseek.com
+#      base-url: ${APP_MODELS_PRIMARY_BASE_URL:https://api.deepseek.com}
 #      api-key: ${DEEPSEEK_API_KEY}
-#      model-name: deepseek-chat
+#      model-name: ${APP_MODELS_PRIMARY_MODEL_NAME:deepseek-chat}
 
 langchain4j:
   ollama:
     chat-model:
-      base-url: http://localhost:11434
-      model-name: llama3.2:3b
-      temperature: 0.0  # 路由判断要确定性输出，温度设为0
-      timeout: PT10S    # 本地模型响应快，10秒足够
+      base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+      model-name: ${OLLAMA_CHAT_MODEL:llama3.2:3b}
+      temperature: ${OLLAMA_TEMPERATURE:0.0}  # 路由判断要确定性输出，温度设为0
+      timeout: ${OLLAMA_TIMEOUT:PT10S}    # 本地模型响应快，10秒足够
 
 management:
   endpoints:
@@ -66,7 +66,7 @@ management:
       probability: 1.0  # 开发环境全采样，生产环境改成 0.1
 zipkin:
   tracing:
-    endpoint: http://localhost:9411/api/v2/spans
+    endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
 
 resilience4j:
   circuitbreaker:
@@ -81,19 +81,19 @@ resilience4j:
 app:
   models:
     primary:
-      provider: openai-compatible  # openai-compatible | anthropic
-      base-url: https://api.deepseek.com
+      provider: ${APP_MODELS_PRIMARY_PROVIDER:openai-compatible}  # openai-compatible | anthropic
+      base-url: ${APP_MODELS_PRIMARY_BASE_URL:https://api.deepseek.com}
       api-key: ${DEEPSEEK_API_KEY}
-      model-name: deepseek-chat
-      max-tokens: 4096
+      model-name: ${APP_MODELS_PRIMARY_MODEL_NAME:deepseek-chat}
+      max-tokens: ${APP_MODELS_PRIMARY_MAX_TOKENS:4096}
     fallback:
-      provider: openai-compatible
-      base-url: http://localhost:11434/v1
-      api-key: ollama
-      model-name: llama3.2:3b
-      max-tokens: 2048
+      provider: ${APP_MODELS_FALLBACK_PROVIDER:openai-compatible}
+      base-url: ${APP_MODELS_FALLBACK_BASE_URL:http://localhost:11434/v1}
+      api-key: ${APP_MODELS_FALLBACK_API_KEY:ollama}
+      model-name: ${APP_MODELS_FALLBACK_MODEL_NAME:llama3.2:3b}
+      max-tokens: ${APP_MODELS_FALLBACK_MAX_TOKENS:2048}
     back:
-      provider: anthropic
+      provider: ${APP_MODELS_BACK_PROVIDER:anthropic}
       api-key: ${ANTHROPIC_API_KEY}
-      model-name: claude-sonnet-4-6
-      max-tokens: 4096
+      model-name: ${APP_MODELS_BACK_MODEL_NAME:claude-sonnet-4-6}
+      max-tokens: ${APP_MODELS_BACK_MAX_TOKENS:4096}
