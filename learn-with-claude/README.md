@@ -1,12 +1,13 @@
 # learn-with-claude
 
 一个基于 `Spring Boot + LangChain4j + PostgreSQL(pgvector)` 的企业知识助手示例项目，支持：
-- JWT 登录鉴权
+
 - 文档上传与切分（PDF/DOCX）
 - 向量检索 + 关键词检索（Hybrid Search）
 - Agent 工具调用（政策检索、天气工具）
 - SSE 流式对话输出
 - Token 用量统计与配额控制
+- 双认证模式：`local-jwt` / `enterprise-jwt`
 
 ## 技术栈
 
@@ -15,7 +16,6 @@
 - LangChain4j 0.36.2
 - PostgreSQL + pgvector
 - Maven
-- 前端：单页 `Vue 3`（静态页面）
 
 ## 目录结构
 
@@ -24,7 +24,9 @@ src/main/java/com/claude/learn
   ├─ controller    # 鉴权、聊天、文档上传接口
   ├─ service       # 检索、文档入库、Token监控等
   ├─ agent         # Agent 定义与工具实现
-  ├─ config        # Security / LangChain 配置
+  ├─ config        # Security / LangChain / 运行配置
+  ├─ filter        # JWT 过滤器
+  ├─ security      # 企业身份 principal / token 解析
   └─ repository    # JPA 仓储
 src/main/resources
   ├─ application.yml
@@ -41,55 +43,64 @@ src/main/resources
 
 ## 配置说明
 
-### 1) 数据库配置
+## 1) 数据库配置
 
-项目会在启动时执行 `src/main/resources/schema.sql`，请先保证数据库可连接，并提前安装 pgvector：
+项目启动时会执行 `src/main/resources/schema.sql`。请先保证数据库可连接，并提前安装 pgvector：
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS vector;
 ```
 
-默认配置在 [application.yml](/D:/github/my-deep-learning/learn-with-claude/src/main/resources/application.yml)：
+主要配置：
+
 - `spring.datasource.url`
 - `spring.datasource.username`
 - `spring.datasource.password`
 
-注意：`LangChainConfig` 中 `EmbeddingStore` 目前写死了数据库地址（`192.168.20.129:5432/ragdb`），如果你的环境不同，需要同步修改 [LangChainConfig.java](/D:/github/my-deep-learning/learn-with-claude/src/main/java/com/claude/learn/config/LangChainConfig.java)。
+## 2) 模型配置
 
-### 2) API Key 配置
+- `DEEPSEEK_API_KEY`：对话模型 Key
+- `EMBEDDING_API_KEY`：Embedding 模型 Key
 
-项目读取以下环境变量：
-- `DEEPSEEK_API_KEY`：对话模型 Key（DeepSeek）
-- `EMBEDDING_API_KEY`：Embedding 模型 Key（DashScope 兼容接口）
+## 3) 认证模式配置（新增）
 
-PowerShell 示例：
+通过 `security.mode` 选择认证模式：
 
-```powershell
-$env:DEEPSEEK_API_KEY="your_deepseek_key"
-$env:EMBEDDING_API_KEY="your_embedding_key"
+```yaml
+security:
+  mode: ${SECURITY_MODE:local-jwt} # local-jwt | enterprise-jwt
+  identity:
+    issuer: ${SECURITY_IDENTITY_ISSUER:}
+    audience: ${SECURITY_IDENTITY_AUDIENCE:}
+    username-claim: ${SECURITY_USERNAME_CLAIM:preferred_username}
+    user-id-claim: ${SECURITY_USER_ID_CLAIM:sub}
+    dept-id-claim: ${SECURITY_DEPT_ID_CLAIM:dept_id}
+    roles-claim: ${SECURITY_ROLES_CLAIM:roles}
+    data-scopes-claim: ${SECURITY_DATA_SCOPES_CLAIM:data_scopes}
+    jwt-secret: ${SECURITY_ENTERPRISE_JWT_SECRET:change-enterprise-secret-in-production}
 ```
+
+- `local-jwt`：使用本地 `JwtAuthFilter + JwtService`。
+- `enterprise-jwt`：使用 `EnterpriseJwtAuthFilter + EnterpriseTokenService`，将 claims 映射为 `UserPrincipal`。
+
+> 说明：当前 enterprise 方案为可运行版本，基于共享密钥验签（HMAC）。后续可替换为 JWK / introspection。
 
 ## 启动项目
 
-```powershell
+```bash
 mvn clean spring-boot:run
 ```
 
 启动后访问：
+
 - 前端页面：`http://localhost:8080/index.html`
 - 服务端口：`8080`
 
-## 默认登录账号
+## 登录与调用
 
-当前登录逻辑为演示写法（硬编码）：
-- 用户名：`admin`
-- 密码：`123456`
+## A. local-jwt（开发模式）
 
-参考 [AuthController.java](/D:/github/my-deep-learning/learn-with-claude/src/main/java/com/claude/learn/controller/AuthController.java)。
-
-## 核心接口
-
-### 1) 登录
+1) 登录获取 token
 
 `POST /api/auth/login`
 
@@ -100,69 +111,41 @@ mvn clean spring-boot:run
 }
 ```
 
-返回：
+2) 调用聊天接口
 
-```json
-{
-  "token": "..."
-}
-```
+`POST /api/chat`（Header 带 `Authorization: Bearer <token>`）
 
-### 2) 同步聊天
+## B. enterprise-jwt（企业模式）
 
-`POST /api/chat`（Header 需带 `Authorization: Bearer <token>`）
+- 不使用本地登录接口（`/api/auth/login` 会返回 405）。
+- 由企业网关/IdP 下发 token，客户端直接带 `Authorization: Bearer <token>` 调用业务接口。
 
-```json
-{
-  "message": "出差酒店能报销多少？"
-}
-```
+## 核心接口
 
-### 3) 流式聊天（SSE）
+- `POST /api/auth/login`（仅 local-jwt 有意义）
+- `POST /api/chat`
+- `GET /api/chat/stream?message=...`（Header 带 `Authorization: Bearer <token>`）
+- `POST /api/document/upload`（multipart/form-data）
+- `GET /api/usage`
 
-`GET /api/chat/stream?message=xxx&token=xxx`
+## SSE 鉴权说明
 
-说明：SSE 场景中 token 通过 query 参数透传（见过滤器实现）。
-
-### 4) 文档上传
-
-`POST /api/document/upload`（multipart/form-data）
-- 参数：`file`（支持 `.pdf`、`.docx`）
-- Header：`Authorization: Bearer <token>`
-
-### 5) Token 用量查询
-
-`GET /api/usage`（Header 需带 Token）
-
-## 典型使用流程
-
-1. 启动服务并登录获取 JWT。
-2. 上传企业政策文档（PDF/DOCX）。
-3. 通过 `/api/chat` 或 `/api/chat/stream` 提问。
-4. Agent 自动调用 `searchPolicy` / `getWeather` 工具返回结果。
-5. 在 `/api/usage` 查看当日 Token 使用情况。
+- 统一使用 `Authorization` Header 传递 token。
+- 出于安全考虑，已移除 query 参数 token 透传能力，避免 token 出现在 URL 与访问日志中。
 
 ## 测试
 
-项目包含多组集成测试（`src/test/java`），多数测试依赖：
-- 可访问的数据库
-- 有效的 API Key
-- 可访问的模型服务
-
-执行：
-
-```powershell
+```bash
 mvn test
 ```
 
+> 注意：多数测试依赖可访问的数据库与模型服务。
+
 ## 已知事项
 
-- 当前包含示例性质的硬编码配置（数据库地址、默认账号）。
-- `application.yml` 中示例账号和密码仅适用于本地开发，请勿用于生产环境。
-- 文档上传接口当前只实现了 `.pdf` 和 `.docx` 解析。
+- `AuthController` 的固定账号密码仅用于本地演示，请勿用于生产。
+- 企业模式当前为 Iteration 1，可继续补充方法级鉴权（`@PreAuthorize`）、审计日志、数据域访问控制。
 
-## 后续可改进
+## 参考
 
-1. 将数据库和模型配置全部改为环境变量，不在代码中写死。
-2. 将演示登录替换为真实用户体系（DB + 密码加密）。
-3. 为上传、检索、对话流程补充端到端测试和异常场景测试。
+- 企业身份集成计划：`SECURITY_IDENTITY_INTEGRATION_PLAN.md`
