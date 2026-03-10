@@ -11,9 +11,8 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
-  spring:
-    security:
-      strategy: MODE_INHERITABLETHREADLOCAL
+  security:
+    strategy: MODE_INHERITABLETHREADLOCAL
   sql:
     init:
       mode: always
@@ -21,6 +20,19 @@ spring:
 logging:
   level:
     org.springframework.security: DEBUG
+
+security:
+  mode: ${SECURITY_MODE:local-jwt} # local-jwt | enterprise-jwt
+  identity:
+    issuer: ${SECURITY_IDENTITY_ISSUER:}
+    audience: ${SECURITY_IDENTITY_AUDIENCE:}
+    username-claim: ${SECURITY_USERNAME_CLAIM:preferred_username}
+    user-id-claim: ${SECURITY_USER_ID_CLAIM:sub}
+    dept-id-claim: ${SECURITY_DEPT_ID_CLAIM:dept_id}
+    roles-claim: ${SECURITY_ROLES_CLAIM:roles}
+    data-scopes-claim: ${SECURITY_DATA_SCOPES_CLAIM:data_scopes}
+    jwt-secret: ${SECURITY_ENTERPRISE_JWT_SECRET:change-enterprise-secret-in-production}
+
 
 jwt:
   secret: ${JWT_SECRET:change-me-in-production}
