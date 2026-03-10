@@ -78,3 +78,20 @@ ALTER TABLE IF EXISTS document_segments
     ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 CREATE INDEX IF NOT EXISTS idx_document_source ON document_segments(source);
 CREATE INDEX IF NOT EXISTS idx_document_created_at ON document_segments(created_at);
+
+-- Security audit log table (Day5)
+CREATE TABLE IF NOT EXISTS audit_log (
+    id          BIGSERIAL PRIMARY KEY,
+    trace_id    VARCHAR(64),
+    user_id     VARCHAR(128),
+    username    VARCHAR(128),
+    dept_id     VARCHAR(128),
+    action      VARCHAR(16) NOT NULL,
+    resource    VARCHAR(256) NOT NULL,
+    decision    VARCHAR(16) NOT NULL,
+    reason      TEXT,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_log_trace_id ON audit_log(trace_id);
+CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON audit_log(created_at);

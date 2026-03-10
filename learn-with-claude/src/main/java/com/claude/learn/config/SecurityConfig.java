@@ -1,6 +1,9 @@
 package com.claude.learn.config;
 
+import com.claude.learn.filter.EnterpriseJwtAuthFilter;
 import com.claude.learn.filter.JwtAuthFilter;
+import com.claude.learn.filter.InputSecurityFilter;
+import com.claude.learn.filter.SecurityAuditFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -10,15 +13,28 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final EnterpriseJwtAuthFilter enterpriseJwtAuthFilter;
+    private final SecurityModeProperties securityModeProperties;
+    private final SecurityAuditFilter securityAuditFilter;
+    private final InputSecurityFilter inputSecurityFilter;
 
-    public SecurityConfig(JwtAuthFilter jwtAuthFilter) {
+    public SecurityConfig(JwtAuthFilter jwtAuthFilter,
+                          EnterpriseJwtAuthFilter enterpriseJwtAuthFilter,
+                          SecurityModeProperties securityModeProperties,
+                          SecurityAuditFilter securityAuditFilter,
+                          InputSecurityFilter inputSecurityFilter) {
         this.jwtAuthFilter = jwtAuthFilter;
+        this.enterpriseJwtAuthFilter = enterpriseJwtAuthFilter;
+        this.securityModeProperties = securityModeProperties;
+        this.securityAuditFilter = securityAuditFilter;
+        this.inputSecurityFilter = inputSecurityFilter;
     }
 
     @Bean
@@ -39,10 +55,18 @@ public class SecurityConfig {
                         .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated()                  // 其余全部需要认证
                 )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(resolveAuthFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(inputSecurityFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(securityAuditFilter, InputSecurityFilter.class)
                 .build();
     }
 
 
+    private OncePerRequestFilter resolveAuthFilter() {
+        if (securityModeProperties.isEnterpriseJwtMode()) {
+            return enterpriseJwtAuthFilter;
+        }
+        return jwtAuthFilter;
+    }
 
 }
