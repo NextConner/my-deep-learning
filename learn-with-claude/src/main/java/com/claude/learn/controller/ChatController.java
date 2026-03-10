@@ -6,6 +6,7 @@ import com.claude.learn.agent.runtime.AgentRunStatus;
 import com.claude.learn.agent.runtime.AgentStep;
 import com.claude.learn.config.AgentRuntimeProperties;
 import com.claude.learn.service.AgentOrchestratorService;
+import com.claude.learn.service.OutputSecurityService;
 import com.claude.learn.service.PromptService;
 import com.claude.learn.service.TokenMonitorService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -48,6 +49,7 @@ public class ChatController {
     private final PromptService promptService;
     private final AgentOrchestratorService agentOrchestratorService;
     private final AgentRuntimeProperties runtimeProperties;
+    private final OutputSecurityService outputSecurityService;
     private final ObjectMapper objectMapper;
 
     public ChatController(PolicyAgent policyAgent,
@@ -55,12 +57,14 @@ public class ChatController {
                           PromptService promptService,
                           AgentOrchestratorService agentOrchestratorService,
                           AgentRuntimeProperties runtimeProperties,
+                          OutputSecurityService outputSecurityService,
                           ObjectMapper objectMapper) {
         this.policyAgent = policyAgent;
         this.tokenMonitorService = tokenMonitorService;
         this.promptService = promptService;
         this.agentOrchestratorService = agentOrchestratorService;
         this.runtimeProperties = runtimeProperties;
+        this.outputSecurityService = outputSecurityService;
         this.objectMapper = objectMapper;
     }
 
@@ -92,10 +96,23 @@ public class ChatController {
             log.info("Chat request completed successfully - username: {}, runId: {}, latency: {}ms",
                     username, run.getRunId(), run.totalLatencyMs());
 
+            String sanitizedAnswer = outputSecurityService.sanitize(run.getFinalAnswer());
+
             if (runtimeProperties.isIncludeTraceInResponse()) {
-                return ResponseEntity.ok(ChatResponse.from(run, true));
+                ChatResponse raw = ChatResponse.from(run, true);
+                ChatResponse sanitized = new ChatResponse(
+                        sanitizedAnswer,
+                        raw.runId(),
+                        raw.status(),
+                        raw.totalLatencyMs(),
+                        raw.totalSteps(),
+                        raw.startedAt(),
+                        raw.endedAt(),
+                        raw.steps()
+                );
+                return ResponseEntity.ok(sanitized);
             } else {
-                return ResponseEntity.ok(Map.of("answer", run.getFinalAnswer()));
+                return ResponseEntity.ok(Map.of("answer", sanitizedAnswer));
             }
         }
 
@@ -170,7 +187,7 @@ public class ChatController {
                 // Check if run was successful
                 if (run.getStatus() == AgentRunStatus.SUCCESS) {
                     // Stream the final answer token by token
-                    String answer = run.getFinalAnswer();
+                    String answer = outputSecurityService.sanitize(run.getFinalAnswer());
                     if (answer != null) {
                         for (char c : answer.toCharArray()) {
                             emitter.send(SseEmitter.event()

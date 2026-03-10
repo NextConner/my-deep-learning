@@ -32,6 +32,19 @@ security:
     roles-claim: ${SECURITY_ROLES_CLAIM:roles}
     data-scopes-claim: ${SECURITY_DATA_SCOPES_CLAIM:data_scopes}
     jwt-secret: ${SECURITY_ENTERPRISE_JWT_SECRET:change-enterprise-secret-in-production}
+  gateway:
+    input-enabled: ${SECURITY_GATEWAY_INPUT_ENABLED:true}
+    output-enabled: ${SECURITY_GATEWAY_OUTPUT_ENABLED:true}
+    max-input-length: ${SECURITY_GATEWAY_MAX_INPUT_LENGTH:4000}
+    blocked-patterns:
+      - "ignore previous instructions"
+      - "reveal system prompt"
+      - "print system prompt"
+      - "bypass security"
+    sensitive-patterns:
+      - "\\b1[3-9]\\d{9}\\b"
+      - "\\b[1-9]\\d{5}(18|19|20)\\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\\d|3[01])\\d{3}[0-9Xx]\\b"
+      - "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"
 
 
 jwt:

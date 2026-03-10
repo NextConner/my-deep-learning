@@ -45,7 +45,7 @@ src/main/resources
 
 ## 配置说明
 
-### 1) 数据库配置
+## 1) 数据库配置
 
 项目启动时会执行 `src/main/resources/schema.sql`。请先保证数据库可连接，并提前安装 pgvector：
 
@@ -136,6 +136,24 @@ mvn clean spring-boot:run
 
 - 统一使用 `Authorization` Header 传递 token。
 - 出于安全考虑，已移除 query 参数 token 透传能力，避免 token 出现在 URL 与访问日志中。
+
+
+## 安全网关（Phase A）
+
+当前已实现三段式安全网关：
+
+- **输入网关**：`InputSecurityFilter`（`/api/chat*`）
+  - 限制输入最大长度（`security.gateway.max-input-length`）
+  - 拦截 Prompt Injection 关键模式（`security.gateway.blocked-patterns`）
+- **业务执行网关**：`ToolPolicyGuardService`
+  - 在工具执行前做权限判断（当前 `sendEmail` 仅 `AI_ADMIN`）
+- **输出网关**：`OutputSecurityService`
+  - 对模型输出做敏感信息脱敏（`security.gateway.sensitive-patterns`）
+
+可通过配置开关：
+
+- `security.gateway.input-enabled`
+- `security.gateway.output-enabled`
 
 ## 测试
 
