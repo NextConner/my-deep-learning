@@ -1,4 +1,4 @@
-# my-deep-learning
+# dev-deep-learning
 
 企业内部 AI 项目（后端 + 前端配套）的工程化实践仓库。
 
