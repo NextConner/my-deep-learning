@@ -77,6 +77,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             return authHeader.substring(7);
         }
+        // SSE 等场景浏览器无法设置自定义 header，允许从 query param 传 token
+        String queryToken = request.getParameter("token");
+        if (queryToken != null && !queryToken.isBlank()) {
+            return queryToken;
+        }
         return null;
     }
 

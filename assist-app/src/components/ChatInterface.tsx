@@ -6,8 +6,9 @@ import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { GoogleGenAI } from '@google/genai';
 import { Message, Role, User as UserType, Category } from '../types';
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 const MAX_INPUT_LENGTH = 500;
 const MAX_CONTEXT_MESSAGES = 10; // Only send last 10 messages for context
@@ -293,6 +294,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ user, onLogout }) 
   const recognitionRef = useRef<any>(null);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -357,6 +359,27 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ user, onLogout }) 
       }
     };
     fetchCategories();
+  }, []);
+
+  const fetchUsage = async () => {
+    if (!user.token) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/usage`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      const summary = data.summary || {};
+      const total = (summary.todayInputTokens || 0) + (summary.todayOutputTokens || 0)
+        || summary.todayTokens || summary.totalTokens || 0;
+      setCurrentTokenUsage(total);
+    } catch {
+      // usage 获取失败不影响主流程
+    }
+  };
+
+  useEffect(() => {
+    fetchUsage();
   }, []);
 
   const handleLongPressCopy = async (text: string, id: string) => {
@@ -455,60 +478,69 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ user, onLogout }) 
 
     setIsLoading(true);
 
-    try {
-      // Simulate token usage increase
-      const inputTokens = textToSend.length * 2;
-      setCurrentTokenUsage(prev => prev + inputTokens);
+    const token = user.token || '';
+    const url = `${API_BASE}/api/chat/stream?message=${encodeURIComponent(textToSend)}&token=${encodeURIComponent(token)}`;
 
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      
-      // Get context: Limit to last MAX_CONTEXT_MESSAGES to save tokens and improve performance
-      const contextMessages = retryMessageId 
-        ? messages.slice(0, messages.findIndex(m => m.id === retryMessageId))
-        : messages;
-      
-      const limitedContext = contextMessages.slice(-MAX_CONTEXT_MESSAGES);
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+    }
 
-      const response = await ai.models.generateContentStream({
-        model: 'gemini-3-flash-preview',
-        contents: [
-          ...limitedContext.map(m => ({
-            role: m.role === Role.USER ? 'user' : 'model',
-            parts: [{ text: m.content }]
-          })),
-          { role: 'user', parts: [{ text: textToSend }] }
-        ],
-        config: {
-          systemInstruction: "你是一个专业、高效的企业内部AI助手。回答要准确、简洁，并符合企业文化。如果涉及敏感信息，请提醒用户遵守公司安全规定。",
-        }
-      });
+    let fullContent = '';
+    let done = false;
 
-      let fullContent = '';
-      for await (const chunk of response) {
-        const chunkText = chunk.text;
-        if (chunkText) {
-          fullContent += chunkText;
-          // Simulate token usage increase for output
-          setCurrentTokenUsage(prev => prev + (chunkText.length * 3));
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === assistantMessageId ? { ...msg, content: fullContent, isError: false } : msg
-            )
-          );
-        }
-      }
-    } catch (error) {
-      console.error('AI Error:', error);
+    const es = new EventSource(url);
+    eventSourceRef.current = es;
+
+    es.addEventListener('token', (e: MessageEvent) => {
+      fullContent += e.data;
       setMessages((prev) =>
         prev.map((msg) =>
-          msg.id === assistantMessageId
-            ? { ...msg, content: '抱歉，我遇到了一些网络问题或系统异常。请检查您的网络连接或尝试点击下方的重试按钮。', isError: true }
-            : msg
+          msg.id === assistantMessageId ? { ...msg, content: fullContent, isError: false } : msg
         )
       );
-    } finally {
+    });
+
+    es.addEventListener('complete', () => {
+      done = true;
+      es.close();
+      eventSourceRef.current = null;
       setIsLoading(false);
-    }
+      fetchUsage();
+    });
+
+    es.addEventListener('error', (e: MessageEvent) => {
+      done = true;
+      es.close();
+      eventSourceRef.current = null;
+      let errMsg = '抱歉，请求处理失败，请重试';
+      try {
+        const errData = JSON.parse(e.data);
+        if (errData.message) errMsg = errData.message;
+        if (errData.code === 'QUOTA_EXCEEDED') errMsg = '今日 Token 配额已用尽，请明天再试';
+      } catch { /* ignore parse error */ }
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === assistantMessageId ? { ...msg, content: errMsg, isError: true } : msg
+        )
+      );
+      setIsLoading(false);
+    });
+
+    es.onerror = () => {
+      if (!done) {
+        done = true;
+        es.close();
+        eventSourceRef.current = null;
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === assistantMessageId
+              ? { ...msg, content: '网络连接异常，请检查后端服务后重试', isError: true }
+              : msg
+          )
+        );
+        setIsLoading(false);
+      }
+    };
   };
 
   const resetChat = () => {

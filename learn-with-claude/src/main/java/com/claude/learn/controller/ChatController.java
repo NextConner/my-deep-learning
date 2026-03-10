@@ -154,6 +154,12 @@ public class ChatController {
         SecurityContext context = SecurityContextHolder.getContext();
         SseEmitter emitter = new SseEmitter(60_000L);
 
+        emitter.onTimeout(() -> {
+            log.warn("SSE emitter timed out - username: {}", username);
+            emitter.complete();
+        });
+        emitter.onError((ex) -> log.error("SSE emitter error - username: {}", username, ex));
+
         executor.submit(() -> {
             SecurityContextHolder.setContext(context);
             try {

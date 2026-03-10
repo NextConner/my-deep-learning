@@ -22,8 +22,8 @@ export default function App() {
     }
   }, []);
 
-  const handleLogin = (username: string, tokenUsage: number) => {
-    const newUser = { username, isLoggedIn: true, tokenUsage };
+  const handleLogin = (username: string, token: string, tokenUsage: number) => {
+    const newUser = { username, isLoggedIn: true, tokenUsage, token };
     setUser(newUser);
     localStorage.setItem('ai_assistant_user', JSON.stringify(newUser));
   };

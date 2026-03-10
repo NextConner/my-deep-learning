@@ -5,7 +5,7 @@ spring:
   application:
     name: learn-from-claude
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/ragdb}
+    url: jdbc:postgresql://172.30.44.143:5432/ragdb
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
     password: ${SPRING_DATASOURCE_PASSWORD:postgres}
   jpa:
@@ -115,10 +115,10 @@ app:
       provider: ${APP_MODELS_FALLBACK_PROVIDER:openai-compatible}
       base-url: ${APP_MODELS_FALLBACK_BASE_URL:http://localhost:11434/v1}
       api-key: ${APP_MODELS_FALLBACK_API_KEY:ollama}
-      model-name: ${APP_MODELS_FALLBACK_MODEL_NAME:llama3.2:3b}
+      model-name: ${APP_MODELS_FALLBACK_MODEL_NAME:phi3:mini}
       max-tokens: ${APP_MODELS_FALLBACK_MAX_TOKENS:2048}
-    back:
-      provider: ${APP_MODELS_BACK_PROVIDER:anthropic}
-      api-key: ${ANTHROPIC_API_KEY}
-      model-name: ${APP_MODELS_BACK_MODEL_NAME:claude-sonnet-4-6}
-      max-tokens: ${APP_MODELS_BACK_MAX_TOKENS:4096}
+#    back:
+#      provider: ${APP_MODELS_BACK_PROVIDER:anthropic}
+#      api-key: ${ANTHROPIC_API_KEY}
+#      model-name: ${APP_MODELS_BACK_MODEL_NAME:claude-sonnet-4-6}
+#      max-tokens: ${APP_MODELS_BACK_MAX_TOKENS:4096}

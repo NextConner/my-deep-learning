@@ -22,4 +22,5 @@ export interface User {
   username: string;
   isLoggedIn: boolean;
   tokenUsage: number;
+  token?: string;
 }

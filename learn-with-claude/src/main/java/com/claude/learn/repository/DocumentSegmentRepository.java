@@ -26,8 +26,8 @@ public interface DocumentSegmentRepository extends JpaRepository<DocumentSegment
             SELECT id, content, source, doc_type, created_at
             FROM document_segments
             WHERE ts_content @@ plainto_tsquery('simple', :keyword)
-              AND (:source IS NULL OR source = :source)
-              AND (:fromTime IS NULL OR created_at >= :fromTime)
+              AND (CAST(:source AS TEXT) IS NULL OR source = CAST(:source AS TEXT))
+              AND (CAST(:fromTime AS TIMESTAMP) IS NULL OR created_at >= CAST(:fromTime AS TIMESTAMP))
             ORDER BY ts_rank(ts_content, plainto_tsquery('simple', :keyword)) DESC
             LIMIT :limit
             """, nativeQuery = true)

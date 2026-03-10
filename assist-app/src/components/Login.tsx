@@ -1,27 +1,51 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { LogIn, ShieldCheck } from 'lucide-react';
+import { LogIn, ShieldCheck, AlertCircle, Loader2 } from 'lucide-react';
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 interface LoginProps {
-  onLogin: (username: string, tokenUsage: number) => void;
+  onLogin: (username: string, token: string, tokenUsage: number) => void;
 }
 
 export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username.trim()) {
-      // Simulate returning token usage from a backend
-      const mockTokenUsage = Math.floor(Math.random() * 5000) + 1000;
-      onLogin(username, mockTokenUsage);
+    if (!username.trim() || !password.trim()) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || '登录失败，请检查用户名和密码');
+        return;
+      }
+
+      onLogin(username, data.token, 0);
+    } catch {
+      setError('无法连接到服务器，请确认后端服务已启动（localhost:8080）');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-50">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-sm bg-white rounded-3xl shadow-xl shadow-slate-200/50 p-8 border border-slate-100"
@@ -46,6 +70,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
               placeholder="请输入用户名"
               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
               required
+              disabled={isLoading}
             />
           </div>
           <div>
@@ -59,14 +84,37 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
               placeholder="请输入密码"
               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
               required
+              disabled={isLoading}
             />
           </div>
+
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-start gap-2 p-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-xs"
+            >
+              <AlertCircle size={14} className="shrink-0 mt-0.5" />
+              <span>{error}</span>
+            </motion.div>
+          )}
+
           <button
             type="submit"
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-200 active:scale-[0.98]"
+            disabled={isLoading}
+            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-medium py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-200 active:scale-[0.98]"
           >
-            <LogIn size={18} />
-            立即登录
+            {isLoading ? (
+              <>
+                <Loader2 size={18} className="animate-spin" />
+                登录中...
+              </>
+            ) : (
+              <>
+                <LogIn size={18} />
+                立即登录
+              </>
+            )}
           </button>
         </form>
 
