@@ -23,3 +23,12 @@ export interface User {
   isLoggedIn: boolean;
   tokenUsage: number;
 }
+
+export interface ChatSession {
+  id: string;
+  title: string;
+  messages: Message[];
+  timestamp: number;
+  lastUpdated: number;
+  isGenerating?: boolean;
+}
