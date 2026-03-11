@@ -15,7 +15,7 @@ public class MapTokenCacheStrategy implements TokenCacheStrategy {
 
 
     private static final Logger log = LoggerFactory.getLogger(MapTokenCacheStrategy.class);
-    private static final int DEFAULT_DAILY_LIMIT = 10000;
+    private static final int DEFAULT_DAILY_LIMIT = 10000000;
     private static final int MAX_CACHE_SIZE = 1000; // 最多缓存 1000 个用户
 
     // LRU Map：超过容量自动淘汰最久未使用的 key

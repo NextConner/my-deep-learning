@@ -6,7 +6,6 @@ import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { GoogleGenAI } from '@google/genai';
 import { Message, Role, User as UserType, Category, ChatSession } from '../types';
 
 const MAX_INPUT_LENGTH = 500;
@@ -348,14 +347,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ user, onLogout }) 
 
   useEffect(() => {
     const fetchCategories = async () => {
-      try {
-        const res = await fetch('/api/categories');
-        const data = await res.json();
-        setCategories(data);
-        if (data.length > 0) setSelectedCategory(data[0]);
-      } catch (err) {
-        console.error('Failed to fetch categories:', err);
-      }
+      // Use hardcoded categories since backend doesn't have /api/categories
+      const defaultCategories: Category[] = [
+        { id: '1', name: '技术咨询', icon: 'Cpu' },
+        { id: '2', name: '业务相关', icon: 'Briefcase' },
+        { id: '3', name: '团队协作', icon: 'Users' },
+        { id: '4', name: '财务管理', icon: 'CreditCard' },
+        { id: '5', name: '其他', icon: 'MoreHorizontal' },
+      ];
+      setCategories(defaultCategories);
+      if (defaultCategories.length > 0) setSelectedCategory(defaultCategories[0]);
     };
     fetchCategories();
   }, []);
@@ -457,58 +458,172 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ user, onLogout }) 
     ));
 
     try {
+      console.log('=== Chat Send Start ===');
+      console.log('Token:', user.token?.slice(0, 20) + '...');
+      console.log('Message:', textToSend);
+      console.log('Active Session ID:', activeSessionId);
+      console.log('Assistant Message ID:', assistantMessageId);
+
       const inputTokens = textToSend.length * 2;
       setCurrentTokenUsage(prev => prev + inputTokens);
 
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      
-      const contextMessages = retryMessageId 
-        ? updatedMessages.slice(0, updatedMessages.findIndex(m => m.id === retryMessageId))
-        : updatedMessages.slice(0, -1);
-      
-      const limitedContext = contextMessages.slice(-MAX_CONTEXT_MESSAGES);
-
-      const response = await ai.models.generateContentStream({
-        model: 'gemini-3-flash-preview',
-        contents: [
-          ...limitedContext.map(m => ({
-            role: m.role === Role.USER ? 'user' : 'model',
-            parts: [{ text: m.content }]
-          })),
-          { role: 'user', parts: [{ text: textToSend }] }
-        ],
-        config: {
-          systemInstruction: "你是一个专业、高效的企业内部AI助手。回答要准确、简洁，并符合企业文化。如果涉及敏感信息，请提醒用户遵守公司安全规定。",
+      // Call backend SSE endpoint
+      const url = `/api/chat/stream?message=${encodeURIComponent(textToSend)}`;
+      console.log('Fetching:', url);
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${user.token || ''}`
         }
       });
 
+      console.log('Response status:', response.status, response.ok);
+
+      // Handle 401/403 - auto logout and redirect to login
+      if (response.status === 401 || response.status === 403) {
+        console.error('Unauthorized - logging out');
+        onLogout();
+        return;  // Don't continue processing
+      }
+
+      if (!response.ok) {
+        throw new Error(`服务器错误: ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('响应体不可读');
+      }
+
+      const decoder = new TextDecoder();
+      let buffer = '';
       let fullContent = '';
-      for await (const chunk of response) {
-        const chunkText = chunk.text;
-        if (chunkText) {
-          fullContent += chunkText;
-          setCurrentTokenUsage(prev => prev + (chunkText.length * 3));
-          
-          setSessions(prev => prev.map(s => {
-            if (s.id === activeSessionId) {
-              const newMsgs = s.messages.map(msg => 
-                msg.id === assistantMessageId ? { ...msg, content: fullContent, isError: false } : msg
-              );
-              // Only update the UI messages if this session is still the active one
-              if (s.id === (window as any).activeSessionIdRef) {
-                setMessages(newMsgs);
-              }
-              return { ...s, messages: newMsgs, lastUpdated: Date.now() };
+      let currentEvent = '';
+      let currentData = '';
+      let eventCount = 0;
+      let rawDataChunks: string[] = [];  // Debug: capture raw data
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          console.log('Stream ended. Total events processed:', eventCount);
+          console.log('Raw SSE data (first 500 chars):', rawDataChunks.join('').substring(0, 500));
+          break;
+        }
+
+        const chunk = decoder.decode(value, { stream: true });
+        rawDataChunks.push(chunk);  // Debug: capture
+        buffer += chunk;
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        console.log('Raw chunk:', JSON.stringify(chunk.substring(0, 100)));  // Debug
+        console.log('Lines in this chunk:', lines.length);  // Debug
+
+        for (const line of lines) {
+          console.log('Processing line:', JSON.stringify(line.substring(0, 80)));  // Debug
+          // Parse SSE format: "event: eventName" or "event:eventName" (support both)
+          if (line.startsWith('event:')) {
+            // New event, process previous if any
+            if (currentEvent && currentData) {
+              console.log(`Processing event: ${currentEvent}, data length: ${currentData.length}`);
+              processSseEvent(currentEvent, currentData);
+              eventCount++;
             }
-            return s;
-          }));
+            // Support both "event: " and "event:" formats
+            currentEvent = line.slice('event:'.length).trim();
+            currentData = '';
+          } else if (line.startsWith('data:')) {
+            // Support both "data: " and "data:" formats
+            currentData = line.slice('data:'.length).trim();
+          } else if (line === '' && currentEvent) {
+            // Empty line marks end of event
+            console.log(`Processing event: ${currentEvent}, data length: ${currentData.length}`);
+            processSseEvent(currentEvent, currentData);
+            eventCount++;
+            currentEvent = '';
+            currentData = '';
+          }
         }
       }
-      
+
+      // Process any remaining event
+      if (currentEvent && currentData) {
+        console.log(`Processing remaining event: ${currentEvent}, data length: ${currentData.length}`);
+        processSseEvent(currentEvent, currentData);
+        eventCount++;
+      }
+      console.log('=== Stream Processing Complete ===');
+
+      function processSseEvent(eventName: string, data: string) {
+        try {
+          console.log(`[processSseEvent] Event: ${eventName}, Data preview: ${data.substring(0, 50)}`);
+          if (eventName === 'token') {
+            // Token is a single character
+            fullContent += data;
+            console.log(`[token] Content now: ${fullContent.substring(0, 50)}`);
+            setCurrentTokenUsage(prev => prev + (data.length * 3));
+
+            setSessions(prev => prev.map(s => {
+              if (s.id === activeSessionId) {
+                const newMsgs = s.messages.map(msg =>
+                  msg.id === assistantMessageId ? { ...msg, content: fullContent, isError: false } : msg
+                );
+                if (s.id === (window as any).activeSessionIdRef) {
+                  setMessages(newMsgs);
+                }
+                return { ...s, messages: newMsgs, lastUpdated: Date.now() };
+              }
+              return s;
+            }));
+          } else if (eventName === 'complete') {
+            // Parse complete event data
+            const parsed = JSON.parse(data);
+            fullContent = parsed.answer || fullContent;
+            console.log(`[complete] Final answer length: ${fullContent.length}`);
+            setCurrentTokenUsage(prev => prev + (fullContent.length * 3));
+
+            setSessions(prev => prev.map(s => {
+              if (s.id === activeSessionId) {
+                const newMsgs = s.messages.map(msg =>
+                  msg.id === assistantMessageId ? { ...msg, content: fullContent, isError: false } : msg
+                );
+                if (s.id === (window as any).activeSessionIdRef) {
+                  setMessages(newMsgs);
+                }
+                return { ...s, messages: newMsgs, lastUpdated: Date.now() };
+              }
+              return s;
+            }));
+          } else if (eventName === 'error') {
+            console.log('[error] Parsing error event');
+            const parsed = JSON.parse(data);
+            const errorMsg = parsed.error || parsed.message || 'Unknown error';
+            console.error('[error]', errorMsg);
+
+            // Display error in chat
+            setSessions(prev => prev.map(s => {
+              if (s.id === activeSessionId) {
+                const newMsgs = s.messages.map(msg =>
+                  msg.id === assistantMessageId ? { ...msg, content: `错误: ${errorMsg}`, isError: true } : msg
+                );
+                if (s.id === (window as any).activeSessionIdRef) {
+                  setMessages(newMsgs);
+                }
+                return { ...s, messages: newMsgs, lastUpdated: Date.now() };
+              }
+              return s;
+            }));
+          }
+          // Ignore other events (step_start, step_complete, etc.)
+        } catch (e) {
+          console.error(`Failed to process SSE event ${eventName}:`, e);
+        }
+      }
+
       setSessions(prev => prev.map(s => {
         if (s.id === activeSessionId) {
-          const title = s.title === '新会话' 
-            ? textToSend.substring(0, 20) || '新会话' 
+          const title = s.title === '新会话'
+            ? textToSend.substring(0, 20) || '新会话'
             : s.title;
           return { ...s, title, isGenerating: false, lastUpdated: Date.now() };
         }
@@ -516,10 +631,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ user, onLogout }) 
       }));
 
     } catch (error) {
-      console.error('AI Error:', error);
+      console.error('Chat Error:', error);
       setSessions(prev => prev.map(s => {
         if (s.id === activeSessionId) {
-          const newMsgs = s.messages.map(msg => 
+          const newMsgs = s.messages.map(msg =>
             msg.id === assistantMessageId ? { ...msg, content: '抱歉，服务出现异常，请稍后重试。', isError: true } : msg
           );
           if (s.id === (window as any).activeSessionIdRef) {

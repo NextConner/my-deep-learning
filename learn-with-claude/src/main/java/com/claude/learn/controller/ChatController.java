@@ -142,7 +142,7 @@ public class ChatController {
             try {
                 emitter.send(SseEmitter.event()
                         .name("error")
-                        .data(new AgentStreamEvent.ErrorEvent(null, "Token quota exceeded", "QUOTA_EXCEEDED")));
+                        .data(new AgentStreamEvent.ErrorEvent(null, "令牌配额已超出", "QUOTA_EXCEEDED")));
                 emitter.complete();
             } catch (IOException e) {
                 log.error("Error sending quota exceeded message", e);

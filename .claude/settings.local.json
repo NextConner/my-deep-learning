@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"D:\\\\code\\\\github\\\\my-deep-learning\" && echo \"=== App.tsx handleLogin ===\" && sed -n '26,30p' assist-app/src/App.tsx && echo -e \"\\\\n=== Login.tsx imports ===\" && sed -n '1,13p' assist-app/src/components/Login.tsx && echo -e \"\\\\n=== ChatInterface.tsx imports ===\" && head -10 assist-app/src/components/ChatInterface.tsx)"
+    ]
+  }
+}
