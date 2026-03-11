@@ -37,10 +37,10 @@ public class ChatController {
     private static final Logger log = LoggerFactory.getLogger(ChatController.class);
 
     private static final String DEFAULT_PROMPT = """
-            ����һ����ҵ�ڲ��������֣��������¹��߿���ʹ�ã�
-            1. searchPolicy����ѯ��˾�ڲ������ĵ�
-            2. getWeather����ѯ��������
-            ������û�������������������Щ���ߣ��ۺϽ�����������ش�
+            你是一个企业内部知识助手，请根据提供的工具来帮助用户，
+            1. searchPolicy-查询公司内部政策和文档
+            2. getWeather-查询天气信息
+            如果用户问你无法解答的问题或者没有对应的工具，请综合告诉用户无法解答相关问题。
             """;
 
     private final PolicyAgent policyAgent;
@@ -86,7 +86,7 @@ public class ChatController {
         if (tokenMonitorService.isExceeded(username)) {
             log.warn("Token quota exceeded - username: {}", username);
             return ResponseEntity.status(429)
-                    .body(Map.of("error", "���� Token ��������꣬����������"));
+                    .body(Map.of("error", "令牌配额已超出"));
         }
 
         String systemPrompt = promptService.getPrompt("policy_agent", DEFAULT_PROMPT);
@@ -124,7 +124,7 @@ public class ChatController {
         } else {
             return ResponseEntity.status(500)
                     .body(Map.of(
-                            "error", "Agent execution failed",
+                            "error", "执行失败，请稍后重试",
                             "runId", run.getRunId()
                     ));
         }
@@ -218,7 +218,7 @@ public class ChatController {
                             .name("error")
                             .data(new AgentStreamEvent.ErrorEvent(
                                     run.getRunId(),
-                                    "Agent execution failed",
+                                    "执行失败，请稍后重试",
                                     run.getStatus().name()
                             )));
                     log.error("Streaming response failed - username: {}, runId: {}, status: {}", username, run.getRunId(), run.getStatus());

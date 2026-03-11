@@ -23,7 +23,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
         if (securityModeProperties.isEnterpriseJwtMode()) {
-            return ResponseEntity.status(405).body(Map.of("error", "Login endpoint is disabled in enterprise-jwt mode"));
+            return ResponseEntity.status(405).body(Map.of("error", "登录端点已禁用"));
         }
 
         // 简化处理：固定用户名密码，生产环境应查数据库
