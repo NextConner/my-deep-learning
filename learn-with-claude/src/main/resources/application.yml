@@ -17,9 +17,6 @@ spring:
     init:
       mode: always
       schema-locations: classpath:schema.sql
-logging:
-  level:
-    org.springframework.security: DEBUG
 
 security:
   mode: ${SECURITY_MODE:local-jwt} # local-jwt | enterprise-jwt
@@ -122,3 +119,39 @@ app:
 #      api-key: ${ANTHROPIC_API_KEY}
 #      model-name: ${APP_MODELS_BACK_MODEL_NAME:claude-sonnet-4-6}
 #      max-tokens: ${APP_MODELS_BACK_MAX_TOKENS:4096}
+
+# OpenTelemetry 配置
+otel:
+  service:
+    name: ${spring.application.name}
+  traces:
+    exporter: jaeger
+    sampler:
+      type: traceidratio
+      argument: "0.1"
+  resource:
+    attributes:
+      deployment.environment: dev
+
+# Jaeger 导出器配置
+otel.exporter.jaeger:
+  endpoint: http://192.168.20.129:14250
+
+
+# ========== 日志配置 ==========
+logging:
+  level:
+    root: INFO
+    com.example: DEBUG          # 指定包的日志级别
+  file:
+    name: logs/app.log            # 日志文件路径
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId}] %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId}] %logger{36} - %msg%n"
+
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB         # 单文件最大 10MB（可选，用于 size+time 混合策略）
+      max-history: 7              # 保留最近 7 天的日志文件
+      total-size-cap: 1GB         # 所有归档日志总大小上限
+      clean-history-on-start: true
