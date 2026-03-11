@@ -23,14 +23,14 @@ export default function App() {
     }
   }, []);
 
-  const handleLogin = (username: string, tokenUsage: number) => {
-    const newUser = { username, isLoggedIn: true, tokenUsage };
+  const handleLogin = (username: string, tokenUsage: number, token: string) => {
+    const newUser = { username, isLoggedIn: true, tokenUsage, token };
     setUser(newUser);
     localStorage.setItem('ai_assistant_user', JSON.stringify(newUser));
   };
 
   const handleLogout = () => {
-    const loggedOutUser = { username: '', isLoggedIn: false, tokenUsage: 0 };
+    const loggedOutUser = { username: '', isLoggedIn: false, tokenUsage: 0, token: undefined };
     setUser(loggedOutUser);
     localStorage.removeItem('ai_assistant_user');
   };

@@ -1,21 +1,42 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { LogIn, ShieldCheck } from 'lucide-react';
+import { LogIn, ShieldCheck, Loader2 } from 'lucide-react';
 
 interface LoginProps {
-  onLogin: (username: string, tokenUsage: number) => void;
+  onLogin: (username: string, tokenUsage: number, token: string) => void;
 }
 
 export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username.trim()) {
-      // Simulate returning token usage from a backend
-      const mockTokenUsage = Math.floor(Math.random() * 5000) + 1000;
-      onLogin(username, mockTokenUsage);
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        // Assume token usage is 0 on login, can be updated from /api/usage
+        onLogin(data.username || username, 0, data.token);
+      } else {
+        setError(data.error || '登录失败');
+      }
+    } catch (err) {
+      setError('登录失败，请检查服务器连接');
+      console.error('Login error:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -63,11 +84,26 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </div>
           <button
             type="submit"
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-200 active:scale-[0.98]"
+            disabled={isLoading}
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <LogIn size={18} />
-            立即登录
+            {isLoading ? (
+              <>
+                <Loader2 size={18} className="animate-spin" />
+                登录中...
+              </>
+            ) : (
+              <>
+                <LogIn size={18} />
+                立即登录
+              </>
+            )}
           </button>
+          {error && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {error}
+            </div>
+          )}
         </form>
 
         <div className="mt-8 pt-6 border-t border-slate-100 text-center">
