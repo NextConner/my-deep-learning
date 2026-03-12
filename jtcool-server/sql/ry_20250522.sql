@@ -23,16 +23,16 @@ create table sys_dept (
 -- ----------------------------
 -- 初始化-部门表数据
 -- ----------------------------
-insert into sys_dept values(100,  0,   '0',          '若依科技',   0, '若依', '15888888888', 'ry@qq.com', '0', '0', 'admin', CURRENT_TIMESTAMP, '', null);
-insert into sys_dept values(101,  100, '0,100',      '深圳总公司', 1, '若依', '15888888888', 'ry@qq.com', '0', '0', 'admin', CURRENT_TIMESTAMP, '', null);
-insert into sys_dept values(102,  100, '0,100',      '长沙分公司', 2, '若依', '15888888888', 'ry@qq.com', '0', '0', 'admin', CURRENT_TIMESTAMP, '', null);
-insert into sys_dept values(103,  101, '0,100,101',  '研发部门',   1, '若依', '15888888888', 'ry@qq.com', '0', '0', 'admin', CURRENT_TIMESTAMP, '', null);
-insert into sys_dept values(104,  101, '0,100,101',  '市场部门',   2, '若依', '15888888888', 'ry@qq.com', '0', '0', 'admin', CURRENT_TIMESTAMP, '', null);
-insert into sys_dept values(105,  101, '0,100,101',  '测试部门',   3, '若依', '15888888888', 'ry@qq.com', '0', '0', 'admin', CURRENT_TIMESTAMP, '', null);
-insert into sys_dept values(106,  101, '0,100,101',  '财务部门',   4, '若依', '15888888888', 'ry@qq.com', '0', '0', 'admin', CURRENT_TIMESTAMP, '', null);
-insert into sys_dept values(107,  101, '0,100,101',  '运维部门',   5, '若依', '15888888888', 'ry@qq.com', '0', '0', 'admin', CURRENT_TIMESTAMP, '', null);
-insert into sys_dept values(108,  102, '0,100,102',  '市场部门',   1, '若依', '15888888888', 'ry@qq.com', '0', '0', 'admin', CURRENT_TIMESTAMP, '', null);
-insert into sys_dept values(109,  102, '0,100,102',  '财务部门',   2, '若依', '15888888888', 'ry@qq.com', '0', '0', 'admin', CURRENT_TIMESTAMP, '', null);
+insert into sys_dept values(100,  0,   '0',          'JtCool总部',   0, '系统管理员', '13800000000', 'admin@jtcool.local', '0', '0', 'admin', CURRENT_TIMESTAMP, '', null);
+insert into sys_dept values(101,  100, '0,100',      '产品技术中心', 1, '系统管理员', '13800000001', 'tech@jtcool.local', '0', '0', 'admin', CURRENT_TIMESTAMP, '', null);
+insert into sys_dept values(102,  100, '0,100',      '运营支持中心', 2, '系统管理员', '13800000002', 'ops@jtcool.local', '0', '0', 'admin', CURRENT_TIMESTAMP, '', null);
+insert into sys_dept values(103,  101, '0,100,101',  '研发部',       1, '技术负责人', '13800000003', 'dev@jtcool.local', '0', '0', 'admin', CURRENT_TIMESTAMP, '', null);
+insert into sys_dept values(104,  101, '0,100,101',  '产品部',       2, '产品负责人', '13800000004', 'pm@jtcool.local', '0', '0', 'admin', CURRENT_TIMESTAMP, '', null);
+insert into sys_dept values(105,  101, '0,100,101',  '测试部',       3, '测试负责人', '13800000005', 'qa@jtcool.local', '0', '0', 'admin', CURRENT_TIMESTAMP, '', null);
+insert into sys_dept values(106,  102, '0,100,102',  '运维部',       1, '运维负责人', '13800000006', 'infra@jtcool.local', '0', '0', 'admin', CURRENT_TIMESTAMP, '', null);
+insert into sys_dept values(107,  102, '0,100,102',  '客服部',       2, '客服负责人', '13800000007', 'service@jtcool.local', '0', '0', 'admin', CURRENT_TIMESTAMP, '', null);
+insert into sys_dept values(108,  102, '0,100,102',  '财务部',       3, '财务负责人', '13800000008', 'finance@jtcool.local', '0', '0', 'admin', CURRENT_TIMESTAMP, '', null);
+insert into sys_dept values(109,  102, '0,100,102',  '人事部',       4, '人事负责人', '13800000009', 'hr@jtcool.local', '0', '0', 'admin', CURRENT_TIMESTAMP, '', null);
 
 
 -- ----------------------------
@@ -66,8 +66,8 @@ create table sys_user (
 -- ----------------------------
 -- 初始化-用户信息表数据
 -- ----------------------------
-insert into sys_user values(1,  103, 'admin', '若依', '00', 'ry@163.com', '15888888888', '1', '', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'admin', CURRENT_TIMESTAMP, '', null, '管理员');
-insert into sys_user values(2,  105, 'ry',    '若依', '00', 'ry@qq.com',  '15666666666', '1', '', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'admin', CURRENT_TIMESTAMP, '', null, '测试员');
+insert into sys_user values(1,  103, 'admin',    '系统管理员', '00', 'admin@jtcool.local',    '13800000010', '1', '', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'admin', CURRENT_TIMESTAMP, '', null, '系统管理员');
+insert into sys_user values(2,  106, 'operator', '运维专员',   '00', 'operator@jtcool.local', '13800000011', '1', '', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'admin', CURRENT_TIMESTAMP, '', null, '运维示例账号');
 
 
 -- ----------------------------
@@ -162,7 +162,6 @@ create table sys_menu (
 insert into sys_menu values('1', '系统管理', '0', '1', 'system',           null, '', '', 1, 0, 'M', '0', '0', '', 'system',   'admin', CURRENT_TIMESTAMP, '', null, '系统管理目录');
 insert into sys_menu values('2', '系统监控', '0', '2', 'monitor',          null, '', '', 1, 0, 'M', '0', '0', '', 'monitor',  'admin', CURRENT_TIMESTAMP, '', null, '系统监控目录');
 insert into sys_menu values('3', '系统工具', '0', '3', 'tool',             null, '', '', 1, 0, 'M', '0', '0', '', 'tool',     'admin', CURRENT_TIMESTAMP, '', null, '系统工具目录');
-insert into sys_menu values('4', '若依官网', '0', '4', 'http://ruoyi.vip', null, '', '', 0, 0, 'M', '0', '0', '', 'guide',    'admin', CURRENT_TIMESTAMP, '', null, '若依官网地址');
 -- 二级菜单
 insert into sys_menu values('100',  '用户管理', '1',   '1', 'user',       'system/user/index',        '', '', 1, 0, 'C', '0', '0', 'system:user:list',        'user',          'admin', CURRENT_TIMESTAMP, '', null, '用户管理菜单');
 insert into sys_menu values('101',  '角色管理', '1',   '2', 'role',       'system/role/index',        '', '', 1, 0, 'C', '0', '0', 'system:role:list',        'peoples',       'admin', CURRENT_TIMESTAMP, '', null, '角色管理菜单');
@@ -596,9 +595,9 @@ create table sys_job (
   primary key (job_id, job_name, job_group)
 );
 
-insert into sys_job values(1, '系统默认（无参）', 'DEFAULT', 'ryTask.ryNoParams',        '0/10 * * * * ?', '3', '1', '1', 'admin', CURRENT_TIMESTAMP, '', null, '');
-insert into sys_job values(2, '系统默认（有参）', 'DEFAULT', 'ryTask.ryParams(''ry'')',  '0/15 * * * * ?', '3', '1', '1', 'admin', CURRENT_TIMESTAMP, '', null, '');
-insert into sys_job values(3, '系统默认（多参）', 'DEFAULT', 'ryTask.ryMultipleParams(''ry'', true, 2000L, 316.50D, 100)',  '0/20 * * * * ?', '3', '1', '1', 'admin', CURRENT_TIMESTAMP, '', null, '');
+insert into sys_job values(1, '系统默认（无参）', 'DEFAULT', 'ryTask.ryNoParams',        '0/10 * * * * ?', '3', '1', '1', 'admin', CURRENT_TIMESTAMP, '', null, '默认示例任务');
+insert into sys_job values(2, '系统默认（有参）', 'DEFAULT', 'ryTask.ryParams(''jtcool'')',  '0/15 * * * * ?', '3', '1', '1', 'admin', CURRENT_TIMESTAMP, '', null, '默认示例任务');
+insert into sys_job values(3, '系统默认（多参）', 'DEFAULT', 'ryTask.ryMultipleParams(''jtcool'', true, 2000L, 316.50D, 100)',  '0/20 * * * * ?', '3', '1', '1', 'admin', CURRENT_TIMESTAMP, '', null, '默认示例任务');
 
 
 -- ----------------------------
@@ -639,8 +638,8 @@ create table sys_notice (
 -- ----------------------------
 -- 初始化-公告信息表数据
 -- ----------------------------
-insert into sys_notice values('1', '温馨提醒：2018-07-01 若依新版本发布啦', '2', '新版本内容', '0', 'admin', CURRENT_TIMESTAMP, '', null, '管理员');
-insert into sys_notice values('2', '维护通知：2018-07-01 若依系统凌晨维护', '1', '维护内容',   '0', 'admin', CURRENT_TIMESTAMP, '', null, '管理员');
+insert into sys_notice values('1', '欢迎使用 JtCool 管理系统', '2', '系统已完成初始化，请根据业务场景配置菜单、角色与参数。', '0', 'admin', CURRENT_TIMESTAMP, '', null, '系统公告');
+insert into sys_notice values('2', '初始化提示', '1', '默认数据仅用于启动验证，正式环境请及时调整账户、权限与参数。',   '0', 'admin', CURRENT_TIMESTAMP, '', null, '系统公告');
 
 
 -- ----------------------------
