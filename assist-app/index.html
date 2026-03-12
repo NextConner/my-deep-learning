@@ -3,7 +3,29 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI助手</title>
+    <title>企业AI助手</title>
+    <script>
+      (function () {
+        var fallbackTitle = '企业AI助手';
+
+        function applyTitle(data) {
+          var enterpriseName = data && typeof data.name === 'string' ? data.name.trim() : '';
+          document.title = enterpriseName ? enterpriseName + 'AI助手' : fallbackTitle;
+        }
+
+        fetch('/api/auth/enterprise-info')
+          .then(function (response) {
+            if (!response.ok) {
+              throw new Error('Failed to load enterprise info');
+            }
+            return response.json();
+          })
+          .then(applyTitle)
+          .catch(function () {
+            document.title = fallbackTitle;
+          });
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

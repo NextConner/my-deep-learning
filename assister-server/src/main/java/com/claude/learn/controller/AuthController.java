@@ -3,6 +3,7 @@ package com.claude.learn.controller;
 
 import com.claude.learn.config.SecurityModeProperties;
 import com.claude.learn.service.JwtService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,10 +15,16 @@ public class AuthController {
 
     private final JwtService jwtService;
     private final SecurityModeProperties securityModeProperties;
+    private final String enterpriseName;
 
-    public AuthController(JwtService jwtService, SecurityModeProperties securityModeProperties) {
+    public AuthController(
+            JwtService jwtService,
+            SecurityModeProperties securityModeProperties,
+            @Value("${app.enterprise.name:企业}") String enterpriseName
+    ) {
         this.jwtService = jwtService;
         this.securityModeProperties = securityModeProperties;
+        this.enterpriseName = enterpriseName;
     }
 
     @PostMapping("/login")
@@ -32,6 +39,14 @@ public class AuthController {
             return ResponseEntity.ok(Map.of("token", token));
         }
         return ResponseEntity.status(401).body(Map.of("error", "用户名或密码错误"));
+    }
+
+    @GetMapping("/enterprise-info")
+    public ResponseEntity<?> getEnterpriseInfo() {
+        return ResponseEntity.ok(Map.of(
+                "name", enterpriseName,
+                "assistantName", enterpriseName + "AI助手"
+        ));
     }
 
     public record LoginRequest(String username, String password) {}

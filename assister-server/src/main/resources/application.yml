@@ -101,6 +101,8 @@ resilience4j:
         register-health-indicator: true
 
 app:
+  enterprise:
+    name: ${APP_ENTERPRISE_NAME:企业}
   models:
     primary:
       provider: ${APP_MODELS_PRIMARY_PROVIDER:openai-compatible}  # openai-compatible | anthropic

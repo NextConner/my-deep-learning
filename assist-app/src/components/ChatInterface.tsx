@@ -23,6 +23,7 @@ const IconMap: Record<string, React.ReactNode> = {
 interface ChatInterfaceProps {
   user: UserType;
   onLogout: () => void;
+  enterpriseName: string;
 }
 
 const CopyButton = ({ text }: { text: string }) => {
@@ -268,7 +269,7 @@ const MessageDetailsModal = ({ msg, onClose }: { msg: Message; onClose: () => vo
   );
 };
 
-export const ChatInterface: React.FC<ChatInterfaceProps> = ({ user, onLogout }) => {
+export const ChatInterface: React.FC<ChatInterfaceProps> = ({ user, onLogout, enterpriseName }) => {
   const [currentTokenUsage, setCurrentTokenUsage] = useState(user.tokenUsage || 0);
   
   // Session management states
@@ -696,7 +697,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ user, onLogout }) 
         {
           id: '1',
           role: Role.ASSISTANT,
-          content: `你好，${user.username}！我是您的企业AI助手。有什么我可以帮您的吗？`,
+          content: `你好，${user.username}！我是您的${enterpriseName}AI助手。有什么我可以帮您的吗？`,
           timestamp: Date.now(),
         },
       ],
@@ -862,7 +863,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ user, onLogout }) 
               <Bot className="text-white w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-sm font-semibold text-stone-900">企业AI助手</h1>
+              <h1 className="text-sm font-semibold text-stone-900">{enterpriseName}AI助手</h1>
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1">
                   <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
