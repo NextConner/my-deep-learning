@@ -24,8 +24,7 @@ public class RagController {
 
         return hybridSearchService.hybridSearch(
                 query,
-                5,
-                null
+                5
         );
     }
 }
