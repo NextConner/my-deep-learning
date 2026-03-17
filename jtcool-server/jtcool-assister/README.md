@@ -1,4 +1,4 @@
-# learn-with-claude
+# jtcool-assister
 
 一个基于 `Spring Boot + LangChain4j + PostgreSQL(pgvector)` 的企业知识助手示例项目，支持：
 

@@ -1,44 +1,33 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-
-
   <parent>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.3.5</version>
-    <relativePath/>
+    <groupId>com.jtcool</groupId>
+    <artifactId>jtcool-server</artifactId>
+    <version>3.9.1</version>
+    <relativePath>../pom.xml</relativePath>
   </parent>
 
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.jinda</groupId>
-  <artifactId>assister-server</artifactId>
+  <artifactId>jtcool-assister</artifactId>
   <packaging>jar</packaging>
-  <version>1.0-SNAPSHOT</version>
-  <name>learn-with-claude</name>
-
-  <!-- 建议用 properties 统一管理版本 -->
-  <properties>
-    <langchain4j.version>0.36.2</langchain4j.version>
-    <java.version>21</java.version>
-  </properties>
+  <description>
+    AI助手服务
+  </description>
 
   <dependencies>
 
     <dependency>
       <groupId>dev.langchain4j</groupId>
       <artifactId>langchain4j-anthropic</artifactId>
-      <version>0.36.2</version>
     </dependency>
 
     <dependency>
       <groupId>io.github.resilience4j</groupId>
       <artifactId>resilience4j-spring-boot3</artifactId>
-      <version>2.2.0</version>
     </dependency>
     <dependency>
       <groupId>io.github.resilience4j</groupId>
       <artifactId>resilience4j-circuitbreaker</artifactId>
-      <version>2.2.0</version>
     </dependency>
 
     <!-- Micrometer Tracing with OpenTelemetry -->
@@ -67,42 +56,36 @@
     <dependency>
       <groupId>dev.langchain4j</groupId>
       <artifactId>langchain4j-ollama</artifactId>
-      <version>0.36.2</version>
     </dependency>
 
     <!-- PDF 解析 -->
     <dependency>
       <groupId>dev.langchain4j</groupId>
       <artifactId>langchain4j-document-parser-apache-pdfbox</artifactId>
-      <version>${langchain4j.version}</version>
     </dependency>
 
     <!-- Word 文档解析 -->
     <dependency>
       <groupId>dev.langchain4j</groupId>
       <artifactId>langchain4j-document-parser-apache-poi</artifactId>
-      <version>${langchain4j.version}</version>
     </dependency>
 
 
     <dependency>
       <groupId>dev.langchain4j</groupId>
       <artifactId>langchain4j</artifactId>
-      <version>${langchain4j.version}</version>
     </dependency>
 
     <!-- PgVector 向量数据库支持 -->
     <dependency>
       <groupId>dev.langchain4j</groupId>
       <artifactId>langchain4j-pgvector</artifactId>
-      <version>${langchain4j.version}</version>
     </dependency>
 
     <!-- Embedding 模型（把文字转成向量） -->
     <dependency>
       <groupId>dev.langchain4j</groupId>
       <artifactId>langchain4j-open-ai</artifactId>
-      <version>${langchain4j.version}</version>
     </dependency>
 
     <!-- Spring Data JPA（连接 PostgreSQL） -->
@@ -132,7 +115,6 @@
     <dependency>
       <groupId>dev.langchain4j</groupId>
       <artifactId>langchain4j-open-ai-spring-boot-starter</artifactId>
-      <version>${langchain4j.version}</version>
     </dependency>
 
     <dependency>
@@ -149,20 +131,17 @@
     <dependency>
       <groupId>io.jsonwebtoken</groupId>
       <artifactId>jjwt-api</artifactId>
-      <version>0.12.3</version>
     </dependency>
 
     <dependency>
       <groupId>io.jsonwebtoken</groupId>
       <artifactId>jjwt-impl</artifactId>
-      <version>0.12.3</version>
       <scope>runtime</scope>
     </dependency>
 
     <dependency>
       <groupId>io.jsonwebtoken</groupId>
       <artifactId>jjwt-jackson</artifactId>
-      <version>0.12.3</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
@@ -174,6 +153,23 @@
   </dependencies>
 
   <build>
-    <finalName>learn-with-claude</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <configuration>
+          <mainClass>com.claude.learn.DemoApplication</mainClass>
+          <addResources>true</addResources>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>repackage</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+    <finalName>${project.artifactId}</finalName>
   </build>
 </project>
