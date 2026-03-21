@@ -4,9 +4,10 @@ import { LogIn, ShieldCheck, Loader2 } from 'lucide-react';
 
 interface LoginProps {
   onLogin: (username: string, tokenUsage: number, token: string) => void;
+  enterpriseName: string;
 }
 
-export const Login: React.FC<LoginProps> = ({ onLogin }) => {
+export const Login: React.FC<LoginProps> = ({ onLogin, enterpriseName }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -51,8 +52,8 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-indigo-200">
             <ShieldCheck className="text-white w-10 h-10" />
           </div>
-          <h1 className="text-2xl font-semibold text-slate-900">企业AI助手</h1>
-          <p className="text-slate-500 text-sm mt-1 text-center">请使用您的企业账号登录</p>
+          <h1 className="text-2xl font-semibold text-slate-900">{enterpriseName}AI助手</h1>
+          <p className="text-slate-500 text-sm mt-1 text-center">请使用您的{enterpriseName}账号登录</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -108,7 +109,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
         <div className="mt-8 pt-6 border-t border-slate-100 text-center">
           <p className="text-xs text-slate-400">
-            © 2024 企业内部系统 · 安全合规
+            © 2024 {enterpriseName}内部系统 · 安全合规
           </p>
         </div>
       </motion.div>

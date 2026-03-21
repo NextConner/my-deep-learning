@@ -18,3 +18,5 @@
 /logs/app.log
 
 /*.iml
+/assister-server/target/
+*/target/

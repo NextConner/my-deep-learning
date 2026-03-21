@@ -2,7 +2,7 @@
 
 企业内部 AI 项目（后端 + 前端配套）的工程化实践仓库。
 
-- 后端：`learn-with-claude`（Java 21 + Spring Boot 3.3.5 + LangChain4j 0.36.2）
+- 后端：`jtcool-assister`（Java 21 + Spring Boot 3.x + LangChain4j 0.36.2）
 - 前端：`assist-app`（配套 Web App，建议与后端按同一环境变量规范联调）
 
 > 说明：当前仓库中包含后端完整代码与一个内置静态前端页面（Vue3 CDN 版）。`assist-app` 可作为独立前端工程接入同一后端 API。
@@ -27,10 +27,12 @@
 
 ```text
 my-deep-learning/
-├─ learn-with-claude/            # 后端服务（Spring Boot）
-│  ├─ src/main/java/...          # Controller / Service / Agent / Security / Filter
-│  ├─ src/main/resources/        # application.yml / schema.sql / static
-│  └─ pom.xml
+├─ jtcool-server/
+│  ├─ jtcool-assister/           # AI 助手服务（Spring Boot）
+│  │  ├─ src/main/java/...       # Controller / Service / Agent / Security / Filter
+│  │  ├─ src/main/resources/     # application.yml / schema.sql / static
+│  │  └─ pom.xml
+│  └─ pom.xml                    # Maven 聚合工程
 └─ README.md                     # 仓库总说明（本文件）
 ```
 
@@ -38,7 +40,7 @@ my-deep-learning/
 
 ## 3. 技术栈（基于 pom.xml + 前端实现）
 
-## 后端（learn-with-claude）
+## 后端（jtcool-assister）
 
 - Java 21
 - Spring Boot 3.3.5
@@ -78,7 +80,7 @@ my-deep-learning/
 
 ## 5. 本地运行（后端）
 
-在 `learn-with-claude` 目录执行：
+在 `jtcool-server` 目录执行：
 
 ```bash
 mvn clean spring-boot:run
@@ -96,7 +98,7 @@ CREATE EXTENSION IF NOT EXISTS vector;
 
 ## 6. 配置要点
 
-配置文件：`learn-with-claude/src/main/resources/application.yml`
+配置文件：`jtcool-server/jtcool-assister/src/main/resources/application.yml`
 
 关键配置分组：
 
@@ -134,5 +136,5 @@ mvn test
 
 ## 9. 进一步阅读
 
-- 后端详细说明：`learn-with-claude/README.md`
-- 企业身份集成计划：`learn-with-claude/SECURITY_IDENTITY_INTEGRATION_PLAN.md`
+- 后端详细说明：`jtcool-server/jtcool-assister/README.md`
+- 企业身份集成计划：`jtcool-server/jtcool-assister/SECURITY_IDENTITY_INTEGRATION_PLAN.md`
