@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtcool.wms.mapper.WmsInventoryLogMapper">
+
+    <resultMap id="WmsInventoryLogResult" type="com.jtcool.wms.domain.WmsInventoryLog">
+        <id property="logId" column="log_id"/>
+        <result property="productId" column="product_id"/>
+        <result property="warehouseId" column="warehouse_id"/>
+        <result property="areaId" column="area_id"/>
+        <result property="locationId" column="location_id"/>
+        <result property="shelfId" column="shelf_id"/>
+        <result property="billId" column="bill_id"/>
+        <result property="billNo" column="bill_no"/>
+        <result property="billType" column="bill_type"/>
+        <result property="changeType" column="change_type"/>
+        <result property="changeQuantity" column="change_quantity"/>
+        <result property="beforeQuantity" column="before_quantity"/>
+        <result property="afterQuantity" column="after_quantity"/>
+        <result property="operatorId" column="operator_id"/>
+        <result property="createTime" column="create_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <select id="selectWmsInventoryLogList" resultMap="WmsInventoryLogResult">
+        select log_id, product_id, warehouse_id, area_id, location_id, shelf_id,
+               bill_id, bill_no, bill_type, change_type, change_quantity,
+               before_quantity, after_quantity, operator_id, create_time, remark
+        from wms_inventory_log
+        <where>
+            <if test="productId != null">and product_id = #{productId}</if>
+            <if test="billId != null">and bill_id = #{billId}</if>
+            <if test="changeType != null and changeType != ''">and change_type = #{changeType}</if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <insert id="insertWmsInventoryLog" useGeneratedKeys="true" keyProperty="logId">
+        insert into wms_inventory_log(product_id, warehouse_id, area_id, location_id, shelf_id,
+                                      bill_id, bill_no, bill_type, change_type, change_quantity,
+                                      before_quantity, after_quantity, operator_id, create_time, remark)
+        values(#{productId}, #{warehouseId}, #{areaId}, #{locationId}, #{shelfId},
+               #{billId}, #{billNo}, #{billType}, #{changeType}, #{changeQuantity},
+               #{beforeQuantity}, #{afterQuantity}, #{operatorId}, now(), #{remark})
+    </insert>
+
+</mapper>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtcool.wms.mapper.WmsWarehouseMapper">
+
+    <resultMap id="WmsWarehouseResult" type="com.jtcool.wms.domain.WmsWarehouse">
+        <id property="warehouseId" column="warehouse_id"/>
+        <result property="warehouseCode" column="warehouse_code"/>
+        <result property="warehouseName" column="warehouse_name"/>
+        <result property="warehouseType" column="warehouse_type"/>
+        <result property="address" column="address"/>
+        <result property="managerId" column="manager_id"/>
+        <result property="status" column="status"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectWmsWarehouseVo">
+        select warehouse_id, warehouse_code, warehouse_name, warehouse_type, address, manager_id,
+               status, del_flag, create_by, create_time, update_by, update_time, remark
+        from wms_warehouse
+    </sql>
+
+    <select id="selectWmsWarehouseList" resultMap="WmsWarehouseResult">
+        <include refid="selectWmsWarehouseVo"/>
+        <where>
+            del_flag = '0'
+            <if test="warehouseName != null and warehouseName != ''">and warehouse_name like concat('%', #{warehouseName}, '%')</if>
+            <if test="warehouseCode != null and warehouseCode != ''">and warehouse_code = #{warehouseCode}</if>
+            <if test="status != null and status != ''">and status = #{status}</if>
+        </where>
+    </select>
+
+    <select id="selectWmsWarehouseById" resultMap="WmsWarehouseResult">
+        <include refid="selectWmsWarehouseVo"/>
+        where warehouse_id = #{warehouseId} and del_flag = '0'
+    </select>
+
+    <insert id="insertWmsWarehouse" useGeneratedKeys="true" keyProperty="warehouseId">
+        insert into wms_warehouse(warehouse_code, warehouse_name, warehouse_type, address, manager_id,
+                                  status, create_by, create_time, remark)
+        values(#{warehouseCode}, #{warehouseName}, #{warehouseType}, #{address}, #{managerId},
+               #{status}, #{createBy}, now(), #{remark})
+    </insert>
+
+    <update id="updateWmsWarehouse">
+        update wms_warehouse
+        <set>
+            <if test="warehouseName != null">warehouse_name = #{warehouseName},</if>
+            <if test="warehouseType != null">warehouse_type = #{warehouseType},</if>
+            <if test="address != null">address = #{address},</if>
+            <if test="managerId != null">manager_id = #{managerId},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = now(),
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where warehouse_id = #{warehouseId}
+    </update>
+
+    <update id="deleteWmsWarehouseByIds">
+        update wms_warehouse set del_flag = '2' where warehouse_id in
+        <foreach collection="array" item="warehouseId" open="(" separator="," close=")">#{warehouseId}</foreach>
+    </update>
+
+</mapper>

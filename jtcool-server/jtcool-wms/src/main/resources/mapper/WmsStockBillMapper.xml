@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtcool.wms.mapper.WmsStockBillMapper">
+
+    <resultMap id="WmsStockBillItemResult" type="com.jtcool.wms.domain.WmsStockBillItem">
+        <id property="itemId" column="item_id"/>
+        <result property="billId" column="bill_id"/>
+        <result property="productId" column="product_id"/>
+        <result property="areaId" column="area_id"/>
+        <result property="locationId" column="location_id"/>
+        <result property="shelfId" column="shelf_id"/>
+        <result property="quantity" column="quantity"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <resultMap id="WmsStockBillResult" type="com.jtcool.wms.domain.WmsStockBill">
+        <id property="billId" column="bill_id"/>
+        <result property="billNo" column="bill_no"/>
+        <result property="billType" column="bill_type"/>
+        <result property="billDate" column="bill_date"/>
+        <result property="warehouseId" column="warehouse_id"/>
+        <result property="relatedOrderId" column="related_order_id"/>
+        <result property="customerId" column="customer_id"/>
+        <result property="supplierId" column="supplier_id"/>
+        <result property="billStatus" column="bill_status"/>
+        <result property="operatorId" column="operator_id"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+        <collection property="items" ofType="com.jtcool.wms.domain.WmsStockBillItem"
+                    select="selectWmsStockBillItemsByBillId" column="bill_id"/>
+    </resultMap>
+
+    <sql id="selectWmsStockBillVo">
+        select bill_id, bill_no, bill_type, bill_date, warehouse_id, related_order_id,
+               customer_id, supplier_id, bill_status, operator_id, del_flag,
+               create_by, create_time, update_by, update_time, remark
+        from wms_stock_bill
+    </sql>
+
+    <select id="selectWmsStockBillList" resultMap="WmsStockBillResult">
+        <include refid="selectWmsStockBillVo"/>
+        <where>
+            del_flag = '0'
+            <if test="billNo != null and billNo != ''">and bill_no like concat('%', #{billNo}, '%')</if>
+            <if test="billType != null and billType != ''">and bill_type = #{billType}</if>
+            <if test="warehouseId != null">and warehouse_id = #{warehouseId}</if>
+            <if test="billStatus != null and billStatus != ''">and bill_status = #{billStatus}</if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <select id="selectWmsStockBillById" resultMap="WmsStockBillResult">
+        <include refid="selectWmsStockBillVo"/>
+        where bill_id = #{billId} and del_flag = '0'
+    </select>
+
+    <select id="selectWmsStockBillWithItems" resultMap="WmsStockBillResult">
+        <include refid="selectWmsStockBillVo"/>
+        where bill_id = #{billId} and del_flag = '0'
+    </select>
+
+    <select id="selectWmsStockBillItemsByBillId" resultMap="WmsStockBillItemResult">
+        select item_id, bill_id, product_id, area_id, location_id, shelf_id, quantity, del_flag, create_time
+        from wms_stock_bill_item
+        where bill_id = #{billId} and del_flag = '0'
+    </select>
+
+    <insert id="insertWmsStockBill" useGeneratedKeys="true" keyProperty="billId">
+        insert into wms_stock_bill(bill_no, bill_type, bill_date, warehouse_id, related_order_id,
+                                   customer_id, supplier_id, bill_status, operator_id, del_flag,
+                                   create_by, create_time, remark)
+        values(#{billNo}, #{billType}, #{billDate}, #{warehouseId}, #{relatedOrderId},
+               #{customerId}, #{supplierId}, #{billStatus}, #{operatorId}, '0',
+               #{createBy}, now(), #{remark})
+    </insert>
+
+    <insert id="insertWmsStockBillItem" useGeneratedKeys="true" keyProperty="itemId">
+        insert into wms_stock_bill_item(bill_id, product_id, area_id, location_id, shelf_id, quantity, del_flag, create_time)
+        values(#{billId}, #{productId}, #{areaId}, #{locationId}, #{shelfId}, #{quantity}, '0', now())
+    </insert>
+
+    <update id="updateWmsStockBill">
+        update wms_stock_bill
+        <set>
+            <if test="billType != null">bill_type = #{billType},</if>
+            <if test="billDate != null">bill_date = #{billDate},</if>
+            <if test="warehouseId != null">warehouse_id = #{warehouseId},</if>
+            <if test="relatedOrderId != null">related_order_id = #{relatedOrderId},</if>
+            <if test="customerId != null">customer_id = #{customerId},</if>
+            <if test="supplierId != null">supplier_id = #{supplierId},</if>
+            <if test="billStatus != null">bill_status = #{billStatus},</if>
+            <if test="operatorId != null">operator_id = #{operatorId},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = now(),
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where bill_id = #{billId}
+    </update>
+
+    <update id="deleteWmsStockBillByIds">
+        update wms_stock_bill set del_flag = '2' where bill_id in
+        <foreach collection="array" item="billId" open="(" separator="," close=")">#{billId}</foreach>
+    </update>
+
+    <update id="deleteWmsStockBillItemsByBillId">
+        update wms_stock_bill_item set del_flag = '2' where bill_id = #{billId}
+    </update>
+
+</mapper>
