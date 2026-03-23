@@ -22,7 +22,8 @@
       "Bash(find D:/github/dev-deep-learning/jtcool-server/jtcool-wms -type f -name *.java)",
       "Bash(xargs head:*)",
       "Bash(mvn -pl jtcool-wms -am test-compile -DskipTests)",
-      "Bash(mvn -pl jtcool-quartz -am test-compile -DskipTests)"
+      "Bash(mvn -pl jtcool-quartz -am test-compile -DskipTests)",
+      "Bash(cd:*)"
     ]
   }
 }
