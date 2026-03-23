@@ -29,6 +29,18 @@
             <artifactId>jtcool-common</artifactId>
         </dependency>
 
+        <!-- OMS模块 -->
+        <dependency>
+            <groupId>com.jtcool</groupId>
+            <artifactId>jtcool-oms</artifactId>
+        </dependency>
+
+        <!-- WMS模块 -->
+        <dependency>
+            <groupId>com.jtcool</groupId>
+            <artifactId>jtcool-wms</artifactId>
+        </dependency>
+
     </dependencies>
 
 </project>

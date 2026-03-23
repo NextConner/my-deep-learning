@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtcool.oms.mapper.OmsOrderStatisticsMapper">
+
+    <resultMap id="OmsOrderStatisticsResult" type="com.jtcool.oms.domain.OmsOrderStatistics">
+        <id property="statId" column="stat_id"/>
+        <result property="statDate" column="stat_date"/>
+        <result property="statType" column="stat_type"/>
+        <result property="customerId" column="customer_id"/>
+        <result property="salesUserId" column="sales_user_id"/>
+        <result property="orderCount" column="order_count"/>
+        <result property="totalAmount" column="total_amount"/>
+        <result property="paidAmount" column="paid_amount"/>
+        <result property="unpaidAmount" column="unpaid_amount"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <select id="selectOmsOrderStatisticsList" resultMap="OmsOrderStatisticsResult">
+        select stat_id, stat_date, stat_type, customer_id, sales_user_id,
+               order_count, total_amount, paid_amount, unpaid_amount, create_time
+        from oms_order_statistics
+        <where>
+            <if test="statType != null and statType != ''">and stat_type = #{statType}</if>
+            <if test="statDate != null">and stat_date = #{statDate}</if>
+            <if test="customerId != null">and customer_id = #{customerId}</if>
+            <if test="salesUserId != null">and sales_user_id = #{salesUserId}</if>
+        </where>
+        order by stat_date desc
+    </select>
+
+    <!-- 聚合查询：按日期统计订单数据，按客户+销售人员分组 -->
+    <select id="aggregateOrderStatsByDate" resultType="map">
+        select
+            o.customer_id,
+            o.sales_user_id,
+            count(o.order_id) as order_count,
+            coalesce(sum(o.final_amount), 0) as total_amount,
+            coalesce(sum(f.paid_amount), 0) as paid_amount,
+            coalesce(sum(f.unpaid_amount), 0) as unpaid_amount
+        from oms_order o
+        left join oms_finance f on f.order_id = o.order_id and f.finance_type = '1' and f.del_flag = '0'
+        where o.del_flag = '0'
+          and o.order_status not in ('REJECTED', 'CANCELLED')
+          and (
+            #{statType} = 'DAILY' and DATE(o.order_date) = DATE(#{statDate})
+            or #{statType} = 'MONTHLY' and DATE_TRUNC('month', o.order_date) = DATE_TRUNC('month', #{statDate}::date)
+            or #{statType} = 'QUARTERLY' and DATE_TRUNC('quarter', o.order_date) = DATE_TRUNC('quarter', #{statDate}::date)
+            or #{statType} = 'YEARLY' and DATE_TRUNC('year', o.order_date) = DATE_TRUNC('year', #{statDate}::date)
+          )
+        group by o.customer_id, o.sales_user_id
+    </select>
+
+    <insert id="insertOmsOrderStatistics" useGeneratedKeys="true" keyProperty="statId">
+        insert into oms_order_statistics(stat_date, stat_type, customer_id, sales_user_id,
+                                         order_count, total_amount, paid_amount, unpaid_amount, create_time)
+        values(#{statDate}, #{statType}, #{customerId}, #{salesUserId},
+               #{orderCount}, #{totalAmount}, #{paidAmount}, #{unpaidAmount}, CURRENT_TIMESTAMP)
+    </insert>
+
+    <insert id="upsertOmsOrderStatistics">
+        insert into oms_order_statistics(stat_date, stat_type, customer_id, sales_user_id,
+                                         order_count, total_amount, paid_amount, unpaid_amount, create_time)
+        values(#{statDate}, #{statType}, #{customerId}, #{salesUserId},
+               #{orderCount}, #{totalAmount}, #{paidAmount}, #{unpaidAmount}, CURRENT_TIMESTAMP)
+        on conflict(stat_date, stat_type, customer_id, sales_user_id)
+        do update set
+            order_count = excluded.order_count,
+            total_amount = excluded.total_amount,
+            paid_amount = excluded.paid_amount,
+            unpaid_amount = excluded.unpaid_amount
+    </insert>
+
+</mapper>

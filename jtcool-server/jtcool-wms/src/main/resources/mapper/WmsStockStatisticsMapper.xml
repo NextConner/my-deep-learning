@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtcool.wms.mapper.WmsStockStatisticsMapper">
+
+    <resultMap id="WmsStockStatisticsResult" type="com.jtcool.wms.domain.WmsStockStatistics">
+        <id property="statId" column="stat_id"/>
+        <result property="statDate" column="stat_date"/>
+        <result property="statType" column="stat_type"/>
+        <result property="warehouseId" column="warehouse_id"/>
+        <result property="areaId" column="area_id"/>
+        <result property="locationId" column="location_id"/>
+        <result property="productId" column="product_id"/>
+        <result property="customerId" column="customer_id"/>
+        <result property="salesUserId" column="sales_user_id"/>
+        <result property="inQuantity" column="in_quantity"/>
+        <result property="outQuantity" column="out_quantity"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <select id="selectWmsStockStatisticsList" resultMap="WmsStockStatisticsResult">
+        select stat_id, stat_date, stat_type, warehouse_id, area_id, location_id,
+               product_id, customer_id, sales_user_id, in_quantity, out_quantity, create_time
+        from wms_stock_statistics
+        <where>
+            <if test="statType != null and statType != ''">and stat_type = #{statType}</if>
+            <if test="statDate != null">and stat_date = #{statDate}</if>
+            <if test="warehouseId != null">and warehouse_id = #{warehouseId}</if>
+            <if test="productId != null">and product_id = #{productId}</if>
+        </where>
+        order by stat_date desc
+    </select>
+
+    <!-- 聚合查询：按日期统计出入库数据，按仓库+库区+库位+产品+客户+销售分组 -->
+    <select id="aggregateStockStatsByDate" resultType="map">
+        select
+            b.warehouse_id,
+            i.area_id,
+            i.location_id,
+            i.product_id,
+            b.customer_id,
+            o.sales_user_id,
+            coalesce(sum(case when b.bill_type like 'IN_%' then i.quantity else 0 end), 0) as in_quantity,
+            coalesce(sum(case when b.bill_type like 'OUT_%' then i.quantity else 0 end), 0) as out_quantity
+        from wms_stock_bill b
+        join wms_stock_bill_item i on i.bill_id = b.bill_id and i.del_flag = '0'
+        left join oms_order o on o.order_id = b.related_order_id
+        where b.del_flag = '0'
+          and b.bill_status = 'COMPLETED'
+          and (
+            #{statType} = 'DAILY' and DATE(b.bill_date) = DATE(#{statDate})
+            or #{statType} = 'MONTHLY' and DATE_TRUNC('month', b.bill_date) = DATE_TRUNC('month', #{statDate}::date)
+            or #{statType} = 'QUARTERLY' and DATE_TRUNC('quarter', b.bill_date) = DATE_TRUNC('quarter', #{statDate}::date)
+            or #{statType} = 'YEARLY' and DATE_TRUNC('year', b.bill_date) = DATE_TRUNC('year', #{statDate}::date)
+          )
+        group by b.warehouse_id, i.area_id, i.location_id, i.product_id, b.customer_id, o.sales_user_id
+    </select>
+
+    <insert id="insertWmsStockStatistics" useGeneratedKeys="true" keyProperty="statId">
+        insert into wms_stock_statistics(stat_date, stat_type, warehouse_id, area_id, location_id,
+                                         product_id, customer_id, sales_user_id, in_quantity, out_quantity, create_time)
+        values(#{statDate}, #{statType}, #{warehouseId}, #{areaId}, #{locationId},
+               #{productId}, #{customerId}, #{salesUserId}, #{inQuantity}, #{outQuantity}, CURRENT_TIMESTAMP)
+    </insert>
+
+    <insert id="upsertWmsStockStatistics">
+        insert into wms_stock_statistics(stat_date, stat_type, warehouse_id, area_id, location_id,
+                                         product_id, customer_id, sales_user_id, in_quantity, out_quantity, create_time)
+        values(#{statDate}, #{statType}, #{warehouseId}, #{areaId}, #{locationId},
+               #{productId}, #{customerId}, #{salesUserId}, #{inQuantity}, #{outQuantity}, CURRENT_TIMESTAMP)
+        on conflict(stat_date, stat_type, warehouse_id, area_id, location_id, product_id, customer_id, sales_user_id)
+        do update set
+            in_quantity = excluded.in_quantity,
+            out_quantity = excluded.out_quantity
+    </insert>
+
+</mapper>
