@@ -157,6 +157,140 @@ export const dynamicRoutes = [
         meta: { title: '修改生成配置', activeMenu: '/tool/gen' }
       }
     ]
+  },
+  {
+    path: '/product',
+    component: Layout,
+    redirect: 'noredirect',
+    meta: { title: '产品档案', icon: 'shopping' },
+    children: [
+      {
+        path: 'category',
+        component: () => import('@/views/product/category/index'),
+        name: 'ProductCategory',
+        meta: { title: '产品分类' }
+      },
+      {
+        path: 'brand',
+        component: () => import('@/views/product/brand/index'),
+        name: 'ProductBrand',
+        meta: { title: '品牌管理' }
+      },
+      {
+        path: 'supplier',
+        component: () => import('@/views/product/supplier/index'),
+        name: 'ProductSupplier',
+        meta: { title: '供应商管理' }
+      },
+      {
+        path: 'product',
+        component: () => import('@/views/product/product/index'),
+        name: 'Product',
+        meta: { title: '产品档案' }
+      }
+    ]
+  },
+  {
+    path: '/oms',
+    component: Layout,
+    redirect: 'noredirect',
+    meta: { title: '订单管理', icon: 'list' },
+    children: [
+      {
+        path: 'customer',
+        component: () => import('@/views/oms/customer/index'),
+        name: 'OmsCustomer',
+        meta: { title: '客户管理' }
+      },
+      {
+        path: 'order',
+        component: () => import('@/views/oms/order/index'),
+        name: 'OmsOrder',
+        meta: { title: '订单管理' }
+      },
+      {
+        path: 'finance',
+        component: () => import('@/views/oms/finance/index'),
+        name: 'OmsFinance',
+        meta: { title: '应收应付' }
+      },
+      {
+        path: 'statistics/order',
+        component: () => import('@/views/oms/statistics/order'),
+        name: 'OmsOrderStatistics',
+        meta: { title: '订单统计' }
+      }
+    ]
+  },
+  {
+    path: '/oms/order/detail',
+    component: Layout,
+    hidden: true,
+    children: [
+      {
+        path: ':orderId',
+        component: () => import('@/views/oms/order/detail'),
+        name: 'OmsOrderDetail',
+        meta: { title: '订单详情', activeMenu: '/oms/order' }
+      }
+    ]
+  },
+  {
+    path: '/wms',
+    component: Layout,
+    redirect: 'noredirect',
+    meta: { title: '仓库管理', icon: 'example' },
+    children: [
+      {
+        path: 'warehouse',
+        component: () => import('@/views/wms/warehouse/index'),
+        name: 'WmsWarehouse',
+        meta: { title: '仓库管理' }
+      },
+      {
+        path: 'location',
+        component: () => import('@/views/wms/location/index'),
+        name: 'WmsLocation',
+        meta: { title: '库位管理' }
+      },
+      {
+        path: 'inventory',
+        component: () => import('@/views/wms/inventory/index'),
+        name: 'WmsInventory',
+        meta: { title: '库存查询' }
+      },
+      {
+        path: 'stockBill',
+        component: () => import('@/views/wms/stockBill/index'),
+        name: 'WmsStockBill',
+        meta: { title: '出入库单' }
+      },
+      {
+        path: 'inventoryLog',
+        component: () => import('@/views/wms/inventoryLog/index'),
+        name: 'WmsInventoryLog',
+        meta: { title: '库存流水' }
+      },
+      {
+        path: 'statistics/stock',
+        component: () => import('@/views/wms/statistics/stock'),
+        name: 'WmsStockStatistics',
+        meta: { title: '出入库统计' }
+      }
+    ]
+  },
+  {
+    path: '/wms/stockBill/detail',
+    component: Layout,
+    hidden: true,
+    children: [
+      {
+        path: ':billId',
+        component: () => import('@/views/wms/stockBill/detail'),
+        name: 'WmsStockBillDetail',
+        meta: { title: '出入库详情', activeMenu: '/wms/stockBill' }
+      }
+    ]
   }
 ]
 
