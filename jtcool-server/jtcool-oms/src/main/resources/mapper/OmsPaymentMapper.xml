@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtcool.oms.mapper.OmsPaymentMapper">
+
+    <resultMap type="com.jtcool.oms.domain.OmsPayment" id="OmsPaymentResult">
+        <result property="paymentId" column="payment_id"/>
+        <result property="financeId" column="finance_id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="paymentAmount" column="payment_amount"/>
+        <result property="paymentDate" column="payment_date"/>
+        <result property="paymentMethod" column="payment_method"/>
+        <result property="paymentAccount" column="payment_account"/>
+        <result property="voucherNo" column="voucher_no"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <select id="selectOmsPaymentByFinanceId" parameterType="Long" resultMap="OmsPaymentResult">
+        select payment_id, finance_id, order_id, payment_amount, payment_date, payment_method, payment_account, voucher_no, create_by, create_time, remark
+        from oms_payment where finance_id = #{financeId} and del_flag = '0' order by create_time desc
+    </select>
+
+    <insert id="insertOmsPayment" parameterType="com.jtcool.oms.domain.OmsPayment">
+        insert into oms_payment(finance_id, order_id, payment_amount, payment_date, payment_method, payment_account, voucher_no, create_by, create_time, remark)
+        values(#{financeId}, #{orderId}, #{paymentAmount}, #{paymentDate}, #{paymentMethod}, #{paymentAccount}, #{voucherNo}, #{createBy}, CURRENT_TIMESTAMP, #{remark})
+    </insert>
+
+</mapper>

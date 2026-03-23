@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtcool.oms.mapper.OmsOrderFlowMapper">
+
+    <resultMap type="com.jtcool.oms.domain.OmsOrderFlow" id="OmsOrderFlowResult">
+        <result property="flowId" column="flow_id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="flowStatus" column="flow_status"/>
+        <result property="actionType" column="action_type"/>
+        <result property="operatorId" column="operator_id"/>
+        <result property="operatorName" column="operator_name"/>
+        <result property="actionTime" column="action_time"/>
+        <result property="rejectReason" column="reject_reason"/>
+        <result property="shippingPhotos" column="shipping_photos"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <select id="selectOmsOrderFlowByOrderId" parameterType="Long" resultMap="OmsOrderFlowResult">
+        select flow_id, order_id, flow_status, action_type, operator_id, operator_name, action_time, reject_reason, shipping_photos, remark
+        from oms_order_flow where order_id = #{orderId} order by action_time asc
+    </select>
+
+    <insert id="insertOmsOrderFlow" parameterType="com.jtcool.oms.domain.OmsOrderFlow">
+        insert into oms_order_flow(order_id, flow_status, action_type, operator_id, operator_name, action_time, reject_reason, shipping_photos, remark)
+        values(#{orderId}, #{flowStatus}, #{actionType}, #{operatorId}, #{operatorName}, CURRENT_TIMESTAMP, #{rejectReason}, #{shippingPhotos}, #{remark})
+    </insert>
+
+</mapper>

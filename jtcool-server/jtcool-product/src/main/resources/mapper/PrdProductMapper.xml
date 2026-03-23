@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtcool.product.mapper.PrdProductMapper">
+    
+    <resultMap type="com.jtcool.product.domain.PrdProduct" id="PrdProductResult">
+        <result property="productId" column="product_id"/>
+        <result property="productCode" column="product_code"/>
+        <result property="productName" column="product_name"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="brandId" column="brand_id"/>
+        <result property="supplierId" column="supplier_id"/>
+        <result property="specification" column="specification"/>
+        <result property="unit" column="unit"/>
+        <result property="standardPrice" column="standard_price"/>
+        <result property="costPrice" column="cost_price"/>
+        <result property="minStock" column="min_stock"/>
+        <result property="maxStock" column="max_stock"/>
+        <result property="warningStock" column="warning_stock"/>
+        <result property="productImage" column="product_image"/>
+        <result property="status" column="status"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectPrdProductVo">
+        select product_id, product_code, product_name, category_id, brand_id, supplier_id, specification, unit, 
+        standard_price, cost_price, min_stock, max_stock, warning_stock, product_image, status, del_flag, 
+        create_by, create_time, update_by, update_time, remark from prd_product
+    </sql>
+
+    <select id="selectPrdProductList" parameterType="com.jtcool.product.domain.PrdProduct" resultMap="PrdProductResult">
+        <include refid="selectPrdProductVo"/>
+        <where>
+            del_flag = '0'
+            <if test="productName != null and productName != ''">
+                AND product_name like concat('%', #{productName}, '%')
+            </if>
+            <if test="productCode != null and productCode != ''">
+                AND product_code = #{productCode}
+            </if>
+            <if test="categoryId != null">
+                AND category_id = #{categoryId}
+            </if>
+            <if test="brandId != null">
+                AND brand_id = #{brandId}
+            </if>
+            <if test="status != null and status != ''">
+                AND status = #{status}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectPrdProductById" parameterType="Long" resultMap="PrdProductResult">
+        <include refid="selectPrdProductVo"/>
+        where product_id = #{productId}
+    </select>
+
+    <insert id="insertPrdProduct" parameterType="com.jtcool.product.domain.PrdProduct">
+        insert into prd_product(product_code, product_name, category_id, brand_id, supplier_id, specification, unit, 
+        standard_price, cost_price, min_stock, max_stock, warning_stock, product_image, status, create_by, create_time, remark)
+        values(#{productCode}, #{productName}, #{categoryId}, #{brandId}, #{supplierId}, #{specification}, #{unit}, 
+        #{standardPrice}, #{costPrice}, #{minStock}, #{maxStock}, #{warningStock}, #{productImage}, #{status}, #{createBy}, CURRENT_TIMESTAMP, #{remark})
+    </insert>
+
+    <update id="updatePrdProduct" parameterType="com.jtcool.product.domain.PrdProduct">
+        update prd_product
+        <set>
+            <if test="productName != null">product_name = #{productName},</if>
+            <if test="categoryId != null">category_id = #{categoryId},</if>
+            <if test="brandId != null">brand_id = #{brandId},</if>
+            <if test="supplierId != null">supplier_id = #{supplierId},</if>
+            <if test="specification != null">specification = #{specification},</if>
+            <if test="unit != null">unit = #{unit},</if>
+            <if test="standardPrice != null">standard_price = #{standardPrice},</if>
+            <if test="costPrice != null">cost_price = #{costPrice},</if>
+            <if test="minStock != null">min_stock = #{minStock},</if>
+            <if test="maxStock != null">max_stock = #{maxStock},</if>
+            <if test="warningStock != null">warning_stock = #{warningStock},</if>
+            <if test="productImage != null">product_image = #{productImage},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = CURRENT_TIMESTAMP,
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where product_id = #{productId}
+    </update>
+
+    <delete id="deletePrdProductById" parameterType="Long">
+        update prd_product set del_flag = '2' where product_id = #{productId}
+    </delete>
+
+    <delete id="deletePrdProductByIds" parameterType="Long">
+        update prd_product set del_flag = '2' where product_id in
+        <foreach item="productId" collection="array" open="(" separator="," close=")">
+            #{productId}
+        </foreach>
+    </delete>
+
+</mapper>

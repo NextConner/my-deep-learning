@@ -173,6 +173,34 @@
                 <version>${jtcool.version}</version>
             </dependency>
 
+            <!-- 产品档案-->
+            <dependency>
+                <groupId>com.jtcool</groupId>
+                <artifactId>jtcool-product</artifactId>
+                <version>${jtcool.version}</version>
+            </dependency>
+
+            <!-- 订单管理-->
+            <dependency>
+                <groupId>com.jtcool</groupId>
+                <artifactId>jtcool-oms</artifactId>
+                <version>${jtcool.version}</version>
+            </dependency>
+
+            <!-- 仓库管理-->
+            <dependency>
+                <groupId>com.jtcool</groupId>
+                <artifactId>jtcool-wms</artifactId>
+                <version>${jtcool.version}</version>
+            </dependency>
+
+            <!-- Redisson -->
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson-spring-boot-starter</artifactId>
+                <version>3.23.5</version>
+            </dependency>
+
             <dependency>
                 <groupId>dev.langchain4j</groupId>
                 <artifactId>langchain4j-anthropic</artifactId>
@@ -262,6 +290,9 @@
         <module>jtcool-quartz</module>
         <module>jtcool-generator</module>
         <module>jtcool-common</module>
+        <module>jtcool-product</module>
+        <module>jtcool-oms</module>
+        <module>jtcool-wms</module>
     </modules>
     <packaging>pom</packaging>
 

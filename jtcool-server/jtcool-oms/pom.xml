@@ -9,38 +9,16 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>jtcool-quartz</artifactId>
-
-    <description>
-        quartz定时任务
-    </description>
+    <artifactId>jtcool-oms</artifactId>
 
     <dependencies>
-
-        <!-- 定时任务 -->
-        <dependency>
-            <groupId>org.quartz-scheduler</groupId>
-            <artifactId>quartz</artifactId>
-        </dependency>
-
-        <!-- 通用工具-->
         <dependency>
             <groupId>com.jtcool</groupId>
             <artifactId>jtcool-common</artifactId>
         </dependency>
-
-        <!-- OMS模块 -->
         <dependency>
             <groupId>com.jtcool</groupId>
-            <artifactId>jtcool-oms</artifactId>
+            <artifactId>jtcool-product</artifactId>
         </dependency>
-
-        <!-- WMS模块 -->
-        <dependency>
-            <groupId>com.jtcool</groupId>
-            <artifactId>jtcool-wms</artifactId>
-        </dependency>
-
     </dependencies>
-
 </project>

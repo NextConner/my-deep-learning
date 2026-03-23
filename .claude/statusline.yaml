@@ -1,0 +1,18 @@
+display:
+  singleLine: false  # Single-line mode
+  hide:              # Hide items
+    - claude-version
+    - memory-files
+
+format:
+  progressBar: braille  # "braille" or "ascii"
+  timeFormat: 24h       # "12h" or "24h"
+  compact: false
+
+content:
+  composers:
+    - name: my-token
+      input: [model, token-bar]
+      format: "[{{.model}} {{.token-bar}}]"
+  use:
+    token: my-token

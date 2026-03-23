@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtcool.wms.mapper.WmsInventoryMapper">
+
+    <resultMap id="WmsInventoryResult" type="com.jtcool.wms.domain.WmsInventory">
+        <id property="inventoryId" column="inventory_id"/>
+        <result property="productId" column="product_id"/>
+        <result property="warehouseId" column="warehouse_id"/>
+        <result property="areaId" column="area_id"/>
+        <result property="locationId" column="location_id"/>
+        <result property="shelfId" column="shelf_id"/>
+        <result property="quantity" column="quantity"/>
+        <result property="lockedQuantity" column="locked_quantity"/>
+        <result property="availableQuantity" column="available_quantity"/>
+        <result property="version" column="version"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <sql id="selectWmsInventoryVo">
+        select inventory_id, product_id, warehouse_id, area_id, location_id, shelf_id,
+               quantity, locked_quantity, available_quantity, version, del_flag, create_time, update_time
+        from wms_inventory
+    </sql>
+
+    <select id="selectWmsInventoryList" resultMap="WmsInventoryResult">
+        <include refid="selectWmsInventoryVo"/>
+        <where>
+            del_flag = '0'
+            <if test="productId != null">and product_id = #{productId}</if>
+            <if test="warehouseId != null">and warehouse_id = #{warehouseId}</if>
+            <if test="areaId != null">and area_id = #{areaId}</if>
+            <if test="locationId != null">and location_id = #{locationId}</if>
+        </where>
+    </select>
+
+    <select id="selectWmsInventoryById" resultMap="WmsInventoryResult">
+        <include refid="selectWmsInventoryVo"/>
+        where inventory_id = #{inventoryId} and del_flag = '0'
+    </select>
+
+    <select id="selectWmsInventoryByKey" resultMap="WmsInventoryResult">
+        <include refid="selectWmsInventoryVo"/>
+        where product_id = #{productId}
+          and warehouse_id = #{warehouseId}
+          and area_id = #{areaId}
+          and del_flag = '0'
+          <choose>
+            <when test="locationId != null">and location_id = #{locationId}</when>
+            <otherwise>and location_id is null</otherwise>
+          </choose>
+          <choose>
+            <when test="shelfId != null">and shelf_id = #{shelfId}</when>
+            <otherwise>and shelf_id is null</otherwise>
+          </choose>
+        for update
+    </select>
+
+    <insert id="insertWmsInventory" useGeneratedKeys="true" keyProperty="inventoryId">
+        insert into wms_inventory(product_id, warehouse_id, area_id, location_id, shelf_id,
+                                  quantity, locked_quantity, available_quantity, version, create_time)
+        values(#{productId}, #{warehouseId}, #{areaId}, #{locationId}, #{shelfId},
+               #{quantity}, #{lockedQuantity}, #{availableQuantity}, #{version}, now())
+    </insert>
+
+    <update id="updateWmsInventory">
+        update wms_inventory
+        <set>
+            <if test="quantity != null">quantity = #{quantity},</if>
+            <if test="lockedQuantity != null">locked_quantity = #{lockedQuantity},</if>
+            <if test="availableQuantity != null">available_quantity = #{availableQuantity},</if>
+            update_time = now()
+        </set>
+        where inventory_id = #{inventoryId}
+    </update>
+
+    <update id="updateWmsInventoryWithVersion">
+        update wms_inventory
+        set quantity = #{quantity},
+            available_quantity = #{availableQuantity},
+            version = #{version},
+            update_time = now()
+        where inventory_id = #{inventoryId}
+    </update>
+
+    <update id="deductInventory">
+        update wms_inventory
+        set quantity = quantity - #{quantity},
+            available_quantity = available_quantity - #{quantity},
+            version = version + 1,
+            update_time = now()
+        where inventory_id = #{inventoryId}
+          and version = #{version}
+          and available_quantity >= #{quantity}
+    </update>
+
+    <update id="lockInventory">
+        update wms_inventory
+        set locked_quantity = locked_quantity + #{quantity},
+            available_quantity = available_quantity - #{quantity},
+            update_time = now()
+        where inventory_id = #{inventoryId}
+          and available_quantity >= #{quantity}
+    </update>
+
+    <update id="unlockInventory">
+        update wms_inventory
+        set locked_quantity = locked_quantity - #{quantity},
+            available_quantity = available_quantity + #{quantity},
+            update_time = now()
+        where inventory_id = #{inventoryId}
+    </update>
+
+</mapper>

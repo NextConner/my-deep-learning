@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtcool.wms.mapper.WmsShelfMapper">
+
+    <resultMap id="WmsShelfResult" type="com.jtcool.wms.domain.WmsShelf">
+        <id property="shelfId" column="shelf_id"/>
+        <result property="locationId" column="location_id"/>
+        <result property="shelfCode" column="shelf_code"/>
+        <result property="shelfType" column="shelf_type"/>
+        <result property="status" column="status"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectWmsShelfVo">
+        select shelf_id, location_id, shelf_code, shelf_type, status, del_flag,
+               create_by, create_time, update_by, update_time, remark
+        from wms_shelf
+    </sql>
+
+    <select id="selectWmsShelfList" resultMap="WmsShelfResult">
+        <include refid="selectWmsShelfVo"/>
+        <where>
+            del_flag = '0'
+            <if test="locationId != null">and location_id = #{locationId}</if>
+            <if test="shelfType != null and shelfType != ''">and shelf_type = #{shelfType}</if>
+            <if test="status != null and status != ''">and status = #{status}</if>
+        </where>
+    </select>
+
+    <select id="selectWmsShelfById" resultMap="WmsShelfResult">
+        <include refid="selectWmsShelfVo"/>
+        where shelf_id = #{shelfId} and del_flag = '0'
+    </select>
+
+    <select id="selectWmsShelfByLocationId" resultMap="WmsShelfResult">
+        <include refid="selectWmsShelfVo"/>
+        where location_id = #{locationId} and del_flag = '0' and status = '0'
+    </select>
+
+    <insert id="insertWmsShelf" useGeneratedKeys="true" keyProperty="shelfId">
+        insert into wms_shelf(location_id, shelf_code, shelf_type, status, create_by, create_time, remark)
+        values(#{locationId}, #{shelfCode}, #{shelfType}, #{status}, #{createBy}, now(), #{remark})
+    </insert>
+
+    <update id="updateWmsShelf">
+        update wms_shelf
+        <set>
+            <if test="shelfType != null">shelf_type = #{shelfType},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = now(),
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where shelf_id = #{shelfId}
+    </update>
+
+    <update id="deleteWmsShelfByIds">
+        update wms_shelf set del_flag = '2' where shelf_id in
+        <foreach collection="array" item="shelfId" open="(" separator="," close=")">#{shelfId}</foreach>
+    </update>
+
+</mapper>

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtcool.product.mapper.PrdBrandMapper">
+    
+    <resultMap type="com.jtcool.product.domain.PrdBrand" id="PrdBrandResult">
+        <result property="brandId" column="brand_id"/>
+        <result property="brandName" column="brand_name"/>
+        <result property="brandCode" column="brand_code"/>
+        <result property="logoUrl" column="logo_url"/>
+        <result property="status" column="status"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectPrdBrandVo">
+        select brand_id, brand_name, brand_code, logo_url, status, del_flag, create_by, create_time, update_by, update_time, remark from prd_brand
+    </sql>
+
+    <select id="selectPrdBrandList" parameterType="com.jtcool.product.domain.PrdBrand" resultMap="PrdBrandResult">
+        <include refid="selectPrdBrandVo"/>
+        <where>
+            del_flag = '0'
+            <if test="brandName != null and brandName != ''">
+                AND brand_name like concat('%', #{brandName}, '%')
+            </if>
+            <if test="brandCode != null and brandCode != ''">
+                AND brand_code = #{brandCode}
+            </if>
+            <if test="status != null and status != ''">
+                AND status = #{status}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectPrdBrandById" parameterType="Long" resultMap="PrdBrandResult">
+        <include refid="selectPrdBrandVo"/>
+        where brand_id = #{brandId}
+    </select>
+
+    <insert id="insertPrdBrand" parameterType="com.jtcool.product.domain.PrdBrand">
+        insert into prd_brand
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="brandId != null">brand_id,</if>
+            <if test="brandName != null and brandName != ''">brand_name,</if>
+            <if test="brandCode != null and brandCode != ''">brand_code,</if>
+            <if test="logoUrl != null">logo_url,</if>
+            <if test="status != null">status,</if>
+            <if test="createBy != null">create_by,</if>
+            create_time,
+            <if test="remark != null">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="brandId != null">#{brandId},</if>
+            <if test="brandName != null and brandName != ''">#{brandName},</if>
+            <if test="brandCode != null and brandCode != ''">#{brandCode},</if>
+            <if test="logoUrl != null">#{logoUrl},</if>
+            <if test="status != null">#{status},</if>
+            <if test="createBy != null">#{createBy},</if>
+            CURRENT_TIMESTAMP,
+            <if test="remark != null">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updatePrdBrand" parameterType="com.jtcool.product.domain.PrdBrand">
+        update prd_brand
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="brandName != null and brandName != ''">brand_name = #{brandName},</if>
+            <if test="brandCode != null">brand_code = #{brandCode},</if>
+            <if test="logoUrl != null">logo_url = #{logoUrl},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = CURRENT_TIMESTAMP,
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where brand_id = #{brandId}
+    </update>
+
+    <delete id="deletePrdBrandById" parameterType="Long">
+        update prd_brand set del_flag = '2' where brand_id = #{brandId}
+    </delete>
+
+    <delete id="deletePrdBrandByIds" parameterType="Long">
+        update prd_brand set del_flag = '2' where brand_id in
+        <foreach item="brandId" collection="array" open="(" separator="," close=")">
+            #{brandId}
+        </foreach>
+    </delete>
+
+</mapper>

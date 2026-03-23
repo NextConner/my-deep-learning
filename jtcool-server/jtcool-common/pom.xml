@@ -101,6 +101,12 @@
             <artifactId>commons-pool2</artifactId>
         </dependency>
 
+        <!-- Redisson 分布式锁 -->
+        <dependency>
+            <groupId>org.redisson</groupId>
+            <artifactId>redisson-spring-boot-starter</artifactId>
+        </dependency>
+
         <!-- 解析客户端操作系统、浏览器等 -->
         <dependency>
             <groupId>nl.basjes.parse.useragent</groupId>

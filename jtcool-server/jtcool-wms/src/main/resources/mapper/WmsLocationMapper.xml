@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtcool.wms.mapper.WmsLocationMapper">
+
+    <resultMap id="WmsLocationResult" type="com.jtcool.wms.domain.WmsLocation">
+        <id property="locationId" column="location_id"/>
+        <result property="areaId" column="area_id"/>
+        <result property="locationCode" column="location_code"/>
+        <result property="locationName" column="location_name"/>
+        <result property="status" column="status"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectWmsLocationVo">
+        select location_id, area_id, location_code, location_name, status, del_flag,
+               create_by, create_time, update_by, update_time, remark
+        from wms_location
+    </sql>
+
+    <select id="selectWmsLocationList" resultMap="WmsLocationResult">
+        <include refid="selectWmsLocationVo"/>
+        <where>
+            del_flag = '0'
+            <if test="areaId != null">and area_id = #{areaId}</if>
+            <if test="locationName != null and locationName != ''">and location_name like concat('%', #{locationName}, '%')</if>
+            <if test="status != null and status != ''">and status = #{status}</if>
+        </where>
+    </select>
+
+    <select id="selectWmsLocationById" resultMap="WmsLocationResult">
+        <include refid="selectWmsLocationVo"/>
+        where location_id = #{locationId} and del_flag = '0'
+    </select>
+
+    <select id="selectWmsLocationByAreaId" resultMap="WmsLocationResult">
+        <include refid="selectWmsLocationVo"/>
+        where area_id = #{areaId} and del_flag = '0' and status = '0'
+    </select>
+
+    <insert id="insertWmsLocation" useGeneratedKeys="true" keyProperty="locationId">
+        insert into wms_location(area_id, location_code, location_name, status, create_by, create_time, remark)
+        values(#{areaId}, #{locationCode}, #{locationName}, #{status}, #{createBy}, now(), #{remark})
+    </insert>
+
+    <update id="updateWmsLocation">
+        update wms_location
+        <set>
+            <if test="locationName != null">location_name = #{locationName},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = now(),
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where location_id = #{locationId}
+    </update>
+
+    <update id="deleteWmsLocationByIds">
+        update wms_location set del_flag = '2' where location_id in
+        <foreach collection="array" item="locationId" open="(" separator="," close=")">#{locationId}</foreach>
+    </update>
+
+</mapper>
