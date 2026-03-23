@@ -80,10 +80,18 @@ const activeMenu = computed(() => {
     border: none;
     height: 100%;
     width: 100% !important;
+    padding: 10px 0; /* 增加顶部和底部的内边距 */
     
     .el-menu-item, .el-sub-menu__title {
+      margin: 4px 12px; /* 增加左右间距，形成悬浮药丸效果 */
+      border-radius: 8px; /* 增加柔和圆角 */
+      width: calc(100% - 24px) !important; /* 修正宽度 */
+      height: 48px;
+      line-height: 48px;
+      transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+      
       &:hover {
-        background-color: var(--menu-hover, rgba(0, 0, 0, 0.06)) !important;
+        background-color: var(--menu-hover, rgba(0, 0, 0, 0.04)) !important;
       }
     }
 
@@ -92,7 +100,8 @@ const activeMenu = computed(() => {
       
       &.is-active {
         color: var(--menu-active-text, #409eff);
-        background-color: var(--menu-hover, rgba(0, 0, 0, 0.06)) !important;
+        background-color: rgba(139, 92, 246, 0.08) !important; /* 极简的护眼高亮色 */
+        font-weight: 500;
       }
     }
 

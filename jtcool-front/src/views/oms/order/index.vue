@@ -1,133 +1,86 @@
 <template>
-  <div class="app-container">
-    <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
-      <el-form-item label="订单号" prop="orderNo">
-        <el-input v-model="queryParams.orderNo" placeholder="请输入订单号" clearable @keyup.enter="handleQuery" />
-      </el-form-item>
-      <el-form-item label="客户" prop="customerId">
-        <el-select v-model="queryParams.customerId" placeholder="请选择客户" clearable filterable>
-          <el-option v-for="item in customerOptions" :key="item.customerId" :label="item.customerName" :value="item.customerId" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="订单状态" prop="orderStatus">
-        <el-select v-model="queryParams.orderStatus" placeholder="订单状态" clearable>
-          <el-option label="已下单" value="CREATED" />
-          <el-option label="销售确认" value="SALES_CONFIRMED" />
-          <el-option label="订单审核" value="AUDITED" />
-          <el-option label="仓库确认" value="WAREHOUSE_CONFIRMED" />
-          <el-option label="登记出库" value="OUT_REGISTERED" />
-          <el-option label="确认发货" value="SHIPPED" />
-          <el-option label="客户签收" value="RECEIVED" />
-          <el-option label="已拒绝" value="REJECTED" />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-        <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-      </el-form-item>
-    </el-form>
+  <div class="orders-container">
+    <!-- Header Section -->
+    <div class="page-header">
+      <div class="header-content">
+        <h1 class="page-title">订单管理</h1>
+        <p class="page-subtitle">Order Management System</p>
+      </div>
+      <el-button type="primary" class="create-btn" @click="handleAdd">
+        <span class="btn-icon">+</span>
+        创建订单
+      </el-button>
+    </div>
 
-    <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
-        <el-button type="primary" plain icon="Plus" @click="handleAdd">新增</el-button>
-      </el-col>
-      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
-    </el-row>
+    <!-- Search Filters -->
+    <div class="search-section" v-show="showSearch">
+      <el-form :model="queryParams" ref="queryRef" class="search-form">
+        <div class="filter-grid">
+          <el-form-item label="订单号" prop="orderNo">
+            <el-input v-model="queryParams.orderNo" placeholder="搜索订单号" clearable @keyup.enter="handleQuery" />
+          </el-form-item>
+          <el-form-item label="客户" prop="customerId">
+            <el-select v-model="queryParams.customerId" placeholder="选择客户" clearable filterable>
+              <el-option v-for="item in customerOptions" :key="item.customerId" :label="item.customerName" :value="item.customerId" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="状态" prop="orderStatus">
+            <el-select v-model="queryParams.orderStatus" placeholder="订单状态" clearable>
+              <el-option label="已下单" value="CREATED" />
+              <el-option label="销售确认" value="SALES_CONFIRMED" />
+              <el-option label="订单审核" value="AUDITED" />
+              <el-option label="仓库确认" value="WAREHOUSE_CONFIRMED" />
+              <el-option label="登记出库" value="OUT_REGISTERED" />
+              <el-option label="确认发货" value="SHIPPED" />
+              <el-option label="客户签收" value="RECEIVED" />
+              <el-option label="已拒绝" value="REJECTED" />
+            </el-select>
+          </el-form-item>
+          <div class="search-actions">
+            <el-button type="primary" @click="handleQuery">搜索</el-button>
+            <el-button @click="resetQuery">重置</el-button>
+          </div>
+        </div>
+      </el-form>
+    </div>
 
-    <el-table v-loading="loading" :data="orderList">
-      <el-table-column label="订单号" align="center" prop="orderNo" width="180" />
-      <el-table-column label="客户名称" align="center" prop="customerName" :show-overflow-tooltip="true" />
-      <el-table-column label="订单状态" align="center" prop="orderStatus">
-        <template #default="scope">
-          <el-tag v-if="scope.row.orderStatus === 'CREATED'" type="info">已下单</el-tag>
-          <el-tag v-else-if="scope.row.orderStatus === 'SALES_CONFIRMED'">销售确认</el-tag>
-          <el-tag v-else-if="scope.row.orderStatus === 'AUDITED'" type="success">订单审核</el-tag>
-          <el-tag v-else-if="scope.row.orderStatus === 'WAREHOUSE_CONFIRMED'" type="primary">仓库确认</el-tag>
-          <el-tag v-else-if="scope.row.orderStatus === 'SHIPPED'" type="warning">确认发货</el-tag>
-          <el-tag v-else-if="scope.row.orderStatus === 'RECEIVED'" type="success">客户签收</el-tag>
-          <el-tag v-else-if="scope.row.orderStatus === 'REJECTED'" type="danger">已拒绝</el-tag>
-          <el-tag v-else>{{ scope.row.orderStatus }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="订单金额" align="center" prop="totalAmount" />
-      <el-table-column label="实付金额" align="center" prop="finalAmount" />
-      <el-table-column label="创建时间" align="center" prop="createTime" width="160">
-        <template #default="scope">
-          <span>{{ parseTime(scope.row.createTime) }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" align="center" width="200" class-name="small-padding fixed-width">
-        <template #default="scope">
-          <el-button link type="primary" icon="View" @click="handleDetail(scope.row)">详情</el-button>
-          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-if="scope.row.orderStatus === 'CREATED'">修改</el-button>
-          <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-if="scope.row.orderStatus === 'CREATED'">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <!-- Orders Grid -->
+    <div class="orders-grid" v-loading="loading">
+      <div class="order-card" v-for="order in orderList" :key="order.orderId" @click="handleDetail(order)">
+        <div class="card-header">
+          <div class="order-number">{{ order.orderNo }}</div>
+          <div class="order-status" :class="`status-${order.orderStatus}`">
+            {{ getStatusText(order.orderStatus) }}
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="customer-info">
+            <div class="customer-name">{{ order.customerName }}</div>
+            <div class="order-date">{{ formatDate(order.createTime) }}</div>
+          </div>
+
+          <div class="amount-section">
+            <div class="amount-label">实付金额</div>
+            <div class="amount-value">¥{{ Number(order.finalAmount).toFixed(2) }}</div>
+          </div>
+        </div>
+
+        <div class="card-footer">
+          <el-button link type="primary" @click.stop="handleDetail(order)">查看详情</el-button>
+          <el-button link type="primary" @click.stop="handleUpdate(order)" v-if="order.orderStatus === 'CREATED'">编辑</el-button>
+          <el-button link type="danger" @click.stop="handleDelete(order)" v-if="order.orderStatus === 'CREATED'">删除</el-button>
+        </div>
+      </div>
+    </div>
 
     <pagination v-show="total>0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
-
-    <el-dialog :title="title" v-model="open" width="900px" append-to-body>
-      <el-form ref="orderRef" :model="form" :rules="rules" label-width="100px">
-        <el-row>
-          <el-col :span="12">
-            <el-form-item label="客户" prop="customerId">
-              <el-select v-model="form.customerId" placeholder="请选择客户" filterable>
-                <el-option v-for="item in customerOptions" :key="item.customerId" :label="item.customerName" :value="item.customerId" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="24">
-            <el-form-item label="订单明细">
-              <el-button type="primary" size="small" @click="handleAddItem">添加产品</el-button>
-              <el-table :data="form.items" style="margin-top: 10px">
-                <el-table-column label="产品" prop="productId">
-                  <template #default="scope">
-                    <el-select v-model="scope.row.productId" placeholder="选择产品" filterable @change="handleProductChange(scope.row)">
-                      <el-option v-for="item in productOptions" :key="item.productId" :label="item.productName" :value="item.productId" />
-                    </el-select>
-                  </template>
-                </el-table-column>
-                <el-table-column label="数量" prop="quantity">
-                  <template #default="scope">
-                    <el-input-number v-model="scope.row.quantity" :min="1" @change="calculateItemTotal(scope.row)" />
-                  </template>
-                </el-table-column>
-                <el-table-column label="单价" prop="unitPrice">
-                  <template #default="scope">
-                    <el-input-number v-model="scope.row.unitPrice" :precision="2" :min="0" @change="calculateItemTotal(scope.row)" />
-                  </template>
-                </el-table-column>
-                <el-table-column label="小计" prop="totalPrice" />
-                <el-table-column label="操作" width="80">
-                  <template #default="scope">
-                    <el-button link type="danger" @click="handleRemoveItem(scope.$index)">删除</el-button>
-                  </template>
-                </el-table-column>
-              </el-table>
-            </el-form-item>
-          </el-col>
-          <el-col :span="24">
-            <el-form-item label="备注">
-              <el-input v-model="form.remark" type="textarea" placeholder="请输入备注" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-      </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button type="primary" @click="submitForm">确 定</el-button>
-          <el-button @click="cancel">取 消</el-button>
-        </div>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
 <script setup name="OmsOrder">
 import { listOrder, getOrder, delOrder, addOrder, updateOrder } from "@/api/oms/order";
 import { listCustomer } from "@/api/oms/customer";
-import { listProduct } from "@/api/product/product";
 import { useRouter } from "vue-router";
 
 const { proxy } = getCurrentInstance();
@@ -135,28 +88,21 @@ const router = useRouter();
 
 const orderList = ref([]);
 const customerOptions = ref([]);
-const productOptions = ref([]);
-const open = ref(false);
 const loading = ref(true);
 const showSearch = ref(true);
 const total = ref(0);
-const title = ref("");
 
 const data = reactive({
-  form: { items: [] },
   queryParams: {
     pageNum: 1,
     pageSize: 10,
     orderNo: undefined,
     customerId: undefined,
     orderStatus: undefined
-  },
-  rules: {
-    customerId: [{ required: true, message: "客户不能为空", trigger: "change" }]
   }
 });
 
-const { queryParams, form, rules } = toRefs(data);
+const { queryParams } = toRefs(data);
 
 function getList() {
   loading.value = true;
@@ -167,31 +113,24 @@ function getList() {
   });
 }
 
-function getCustomerOptions() {
-  listCustomer().then(response => {
-    customerOptions.value = response.rows;
-  });
-}
-
-function getProductOptions() {
-  listProduct().then(response => {
-    productOptions.value = response.rows;
-  });
-}
-
-function cancel() {
-  open.value = false;
-  reset();
-}
-
-function reset() {
-  form.value = {
-    orderId: undefined,
-    customerId: undefined,
-    remark: undefined,
-    items: []
+function getStatusText(status) {
+  const statusMap = {
+    'CREATED': '已下单',
+    'SALES_CONFIRMED': '销售确认',
+    'AUDITED': '订单审核',
+    'WAREHOUSE_CONFIRMED': '仓库确认',
+    'OUT_REGISTERED': '登记出库',
+    'SHIPPED': '确认发货',
+    'RECEIVED': '客户签收',
+    'REJECTED': '已拒绝'
   };
-  proxy.resetForm("orderRef");
+  return statusMap[status] || status;
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
 }
 
 function handleQuery() {
@@ -205,71 +144,19 @@ function resetQuery() {
 }
 
 function handleAdd() {
-  reset();
-  open.value = true;
-  title.value = "创建订单";
-}
-
-function handleUpdate(row) {
-  reset();
-  getOrder(row.orderId).then(response => {
-    form.value = response.data;
-    open.value = true;
-    title.value = "修改订单";
-  });
+  router.push('/oms/order/create');
 }
 
 function handleDetail(row) {
-  router.push({ path: '/oms/order/detail/' + row.orderId });
+  router.push(`/oms/order/detail/${row.orderId}`);
 }
 
-function handleAddItem() {
-  form.value.items.push({
-    productId: undefined,
-    quantity: 1,
-    unitPrice: 0,
-    totalPrice: 0
-  });
-}
-
-function handleRemoveItem(index) {
-  form.value.items.splice(index, 1);
-}
-
-function handleProductChange(row) {
-  const product = productOptions.value.find(p => p.productId === row.productId);
-  if (product) {
-    row.unitPrice = product.standardPrice;
-    calculateItemTotal(row);
-  }
-}
-
-function calculateItemTotal(row) {
-  row.totalPrice = (row.quantity * row.unitPrice).toFixed(2);
-}
-
-function submitForm() {
-  proxy.$refs["orderRef"].validate(valid => {
-    if (valid) {
-      if (form.value.orderId != undefined) {
-        updateOrder(form.value).then(response => {
-          proxy.$modal.msgSuccess("修改成功");
-          open.value = false;
-          getList();
-        });
-      } else {
-        addOrder(form.value).then(response => {
-          proxy.$modal.msgSuccess("新增成功");
-          open.value = false;
-          getList();
-        });
-      }
-    }
-  });
+function handleUpdate(row) {
+  router.push(`/oms/order/edit/${row.orderId}`);
 }
 
 function handleDelete(row) {
-  proxy.$modal.confirm('是否确认删除订单号为"' + row.orderNo + '"的数据项?').then(function() {
+  proxy.$modal.confirm('确认删除订单"' + row.orderNo + '"？').then(() => {
     return delOrder(row.orderId);
   }).then(() => {
     getList();
@@ -277,7 +164,216 @@ function handleDelete(row) {
   }).catch(() => {});
 }
 
+listCustomer({}).then(response => {
+  customerOptions.value = response.rows;
+});
+
 getList();
-getCustomerOptions();
-getProductOptions();
 </script>
+
+<style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600&display=swap');
+
+.orders-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
+  padding: 2rem;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3rem;
+  animation: slideDown 0.6s ease-out;
+}
+
+.header-content {
+  flex: 1;
+}
+
+.page-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: #1a1a2e;
+  margin: 0;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.page-subtitle {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.create-btn {
+  height: 3.5rem;
+  padding: 0 2rem;
+  background: #1a1a2e;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.create-btn:hover {
+  background: #16213e;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(26, 26, 46, 0.3);
+}
+
+.btn-icon {
+  font-size: 1.5rem;
+  margin-right: 0.5rem;
+}
+
+.search-section {
+  background: white;
+  border-radius: 1rem;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  animation: fadeIn 0.6s ease-out 0.1s both;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  align-items: end;
+}
+
+.search-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.orders-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.order-card {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  animation: fadeInUp 0.6s ease-out both;
+}
+
+.order-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+  border-color: #1a1a2e;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.order-number {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  letter-spacing: -0.01em;
+}
+
+.order-status {
+  padding: 0.375rem 0.875rem;
+  border-radius: 2rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-CREATED { background: #e0e7ff; color: #4338ca; }
+.status-SALES_CONFIRMED { background: #dbeafe; color: #1e40af; }
+.status-AUDITED { background: #d1fae5; color: #065f46; }
+.status-WAREHOUSE_CONFIRMED { background: #fef3c7; color: #92400e; }
+.status-SHIPPED { background: #fed7aa; color: #9a3412; }
+.status-RECEIVED { background: #bbf7d0; color: #14532d; }
+.status-REJECTED { background: #fecaca; color: #991b1b; }
+
+.card-body {
+  margin-bottom: 1.25rem;
+}
+
+.customer-info {
+  margin-bottom: 1.5rem;
+}
+
+.customer-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.25rem;
+}
+
+.order-date {
+  font-size: 0.875rem;
+  color: #9ca3af;
+}
+
+.amount-section {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  padding: 1rem;
+  border-radius: 0.75rem;
+}
+
+.amount-label {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.amount-value {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: white;
+}
+
+.card-footer {
+  display: flex;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f0f0f0;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+
+

@@ -24,6 +24,9 @@
     </el-form>
 
     <el-row :gutter="10" class="mb8">
+      <el-col :span="1.5">
+        <el-button type="primary" icon="Plus" @click="handleAdd">新增</el-button>
+      </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -60,6 +63,29 @@
     </el-table>
 
     <pagination v-show="total>0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
+
+    <el-dialog :title="title" v-model="addDialogVisible" width="600px">
+      <el-form :model="addForm" :rules="addRules" ref="addRef" label-width="100px">
+        <el-form-item label="选择订单" prop="orderId">
+          <el-select v-model="addForm.orderId" placeholder="请选择订单" filterable @change="handleOrderChange">
+            <el-option v-for="order in orderList" :key="order.orderId" :label="order.orderNo + ' - ' + order.customerName" :value="order.orderId" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="财务类型" prop="financeType">
+          <el-radio-group v-model="addForm.financeType">
+            <el-radio label="RECEIVABLE">应收</el-radio>
+            <el-radio label="PAYABLE">应付</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="总金额" prop="totalAmount">
+          <el-input-number v-model="addForm.totalAmount" :precision="2" :min="0" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button type="primary" @click="submitAdd">确 定</el-button>
+        <el-button @click="addDialogVisible = false">取 消</el-button>
+      </template>
+    </el-dialog>
 
     <el-dialog title="添加收付款记录" v-model="paymentDialogVisible" width="500px">
       <el-form :model="paymentForm" :rules="paymentRules" ref="paymentRef" label-width="100px">
@@ -102,14 +128,18 @@
 </template>
 
 <script setup name="OmsFinance">
-import { listFinance, addPayment, updateInvoice } from "@/api/oms/finance";
+import { listFinance, addFinance, addPayment, updateInvoice } from "@/api/oms/finance";
+import { listOrder } from "@/api/oms/order";
 
 const { proxy } = getCurrentInstance();
 
 const financeList = ref([]);
+const orderList = ref([]);
 const loading = ref(true);
 const showSearch = ref(true);
 const total = ref(0);
+const title = ref("");
+const addDialogVisible = ref(false);
 const paymentDialogVisible = ref(false);
 const invoiceDialogVisible = ref(false);
 const currentFinance = ref({});
@@ -122,8 +152,14 @@ const data = reactive({
     financeType: undefined,
     paymentStatus: undefined
   },
+  addForm: {},
   paymentForm: {},
   invoiceForm: {},
+  addRules: {
+    orderId: [{ required: true, message: "请选择订单", trigger: "change" }],
+    financeType: [{ required: true, message: "请选择财务类型", trigger: "change" }],
+    totalAmount: [{ required: true, message: "总金额不能为空", trigger: "blur" }]
+  },
   paymentRules: {
     paymentAmount: [{ required: true, message: "收付款金额不能为空", trigger: "blur" }],
     paymentMethod: [{ required: true, message: "收付款方式不能为空", trigger: "change" }]
@@ -134,7 +170,7 @@ const data = reactive({
   }
 });
 
-const { queryParams, paymentForm, invoiceForm, paymentRules, invoiceRules } = toRefs(data);
+const { queryParams, addForm, paymentForm, invoiceForm, addRules, paymentRules, invoiceRules } = toRefs(data);
 
 function getList() {
   loading.value = true;
@@ -153,6 +189,42 @@ function handleQuery() {
 function resetQuery() {
   proxy.resetForm("queryRef");
   handleQuery();
+}
+
+function handleAdd() {
+  title.value = "新增应收应付";
+  addForm.value = {
+    orderId: undefined,
+    financeType: 'RECEIVABLE',
+    totalAmount: 0
+  };
+  getOrderList();
+  addDialogVisible.value = true;
+}
+
+function getOrderList() {
+  listOrder({ pageNum: 1, pageSize: 100 }).then(response => {
+    orderList.value = response.rows;
+  });
+}
+
+function handleOrderChange(orderId) {
+  const order = orderList.value.find(o => o.orderId === orderId);
+  if (order) {
+    addForm.value.totalAmount = order.finalAmount;
+  }
+}
+
+function submitAdd() {
+  proxy.$refs["addRef"].validate(valid => {
+    if (valid) {
+      addFinance(addForm.value).then(() => {
+        proxy.$modal.msgSuccess("新增成功");
+        addDialogVisible.value = false;
+        getList();
+      });
+    }
+  });
 }
 
 function handlePayment(row) {

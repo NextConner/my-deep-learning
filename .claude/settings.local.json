@@ -23,7 +23,11 @@
       "Bash(xargs head:*)",
       "Bash(mvn -pl jtcool-wms -am test-compile -DskipTests)",
       "Bash(mvn -pl jtcool-quartz -am test-compile -DskipTests)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(git remote:*)",
+      "Bash(git push:*)",
+      "Bash(npm run:*)",
+      "Bash(curl:*)"
     ]
   }
 }

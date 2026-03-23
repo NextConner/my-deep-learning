@@ -8,28 +8,28 @@ $tiffany: #4AB7BD;
 $yellow: #FEC171;
 $panGreen: #30B08F;
 
-// 默认主题变量
-$menuText: #bfcbd9;
-$menuActiveText: #409eff;
-$menuBg: #304156;
-$menuHover: #263445;
+// 默认主题变量 (修改为更加柔和的护眼暗色)
+$menuText: #cbd5e1; /* 柔和的灰蓝色文字 */
+$menuActiveText: #8b5cf6; /* 柔和的紫色作为高亮 */
+$menuBg: #1e293b; /* 柔和的深蓝灰色背景 */
+$menuHover: #334155; /* 悬浮颜色稍微变亮 */
 
-// 浅色主题theme-light
-$menuLightBg: #ffffff;
-$menuLightHover: #f0f1f5;
-$menuLightText: #303133;
-$menuLightActiveText: #409EFF;
+// 浅色主题theme-light (修改为奶白/极简灰)
+$menuLightBg: #f8fafc; /* 极浅的蓝灰白 */
+$menuLightHover: #f1f5f9; /* 悬浮浅灰色 */
+$menuLightText: #475569; /* 柔和的深灰色文字 */
+$menuLightActiveText: #8b5cf6; /* 柔和的紫色作为高亮 */
 
 // 基础变量
 $base-sidebar-width: 200px;
 $sideBarWidth: 200px;
 
 // 菜单暗色变量
-$base-menu-color: #bfcbd9;
-$base-menu-color-active: #f4f4f5;
-$base-menu-background: #304156;
-$base-sub-menu-background: #1f2d3d;
-$base-sub-menu-hover: #001528;
+$base-menu-color: #cbd5e1;
+$base-menu-color-active: #8b5cf6;
+$base-menu-background: #1e293b;
+$base-sub-menu-background: #0f172a; /* 子菜单更深一点增加层次感 */
+$base-sub-menu-hover: #334155;
 
 // 组件变量
 $--color-primary: #409EFF;

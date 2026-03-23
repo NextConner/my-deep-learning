@@ -17,6 +17,15 @@ export function getFinance(financeId) {
   })
 }
 
+// 新增应收应付
+export function addFinance(data) {
+  return request({
+    url: '/oms/finance',
+    method: 'post',
+    data: data
+  })
+}
+
 // 添加收付款记录
 export function addPayment(data) {
   return request({

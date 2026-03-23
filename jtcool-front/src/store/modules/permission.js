@@ -108,6 +108,8 @@ export function filterDynamicRoutes(routes) {
       if (auth.hasRoleOr(route.roles)) {
         res.push(route)
       }
+    } else {
+      res.push(route)
     }
   })
   return res

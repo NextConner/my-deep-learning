@@ -17,8 +17,14 @@
           <el-tag v-else-if="orderData.orderStatus === 'REJECTED'" type="danger">已拒绝</el-tag>
           <el-tag v-else>{{ orderData.orderStatus }}</el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="订单金额">{{ orderData.totalAmount }}</el-descriptions-item>
+        <el-descriptions-item label="销售人员">{{ orderData.salesUserName }}</el-descriptions-item>
+        <el-descriptions-item label="订单日期">{{ parseTime(orderData.orderDate, '{y}-{m}-{d}') }}</el-descriptions-item>
+        <el-descriptions-item label="交货日期">{{ parseTime(orderData.deliveryDate, '{y}-{m}-{d}') }}</el-descriptions-item>
+        <el-descriptions-item label="订单总额">¥{{ orderData.totalAmount }}</el-descriptions-item>
+        <el-descriptions-item label="优惠金额">¥{{ orderData.discountAmount }}</el-descriptions-item>
+        <el-descriptions-item label="实付金额">¥{{ orderData.finalAmount }}</el-descriptions-item>
         <el-descriptions-item label="创建时间">{{ parseTime(orderData.createTime) }}</el-descriptions-item>
+        <el-descriptions-item label="备注" :span="2">{{ orderData.remark || '-' }}</el-descriptions-item>
       </el-descriptions>
     </el-card>
 
@@ -26,11 +32,31 @@
       <template #header>
         <span>订单明细</span>
       </template>
-      <el-table :data="orderData.items" border>
-        <el-table-column label="产品名称" prop="productName" />
+      <el-table :data="orderData.orderItems" border>
+        <el-table-column label="产品名称" prop="productName">
+          <template #default="scope">
+            <el-popover placement="top" :width="300" trigger="hover">
+              <template #reference>
+                <el-link type="primary" @click="goToProduct(scope.row.productId)">{{ scope.row.productName }}</el-link>
+              </template>
+              <div>
+                <p><strong>产品编码：</strong>{{ scope.row.productCode }}</p>
+                <p><strong>规格：</strong>{{ scope.row.specification || '-' }}</p>
+                <p><strong>单位：</strong>{{ scope.row.unit }}</p>
+              </div>
+            </el-popover>
+          </template>
+        </el-table-column>
+        <el-table-column label="产品编码" prop="productCode" />
+        <el-table-column label="规格" prop="specification" />
+        <el-table-column label="单位" prop="unit" align="center" />
         <el-table-column label="数量" prop="quantity" align="center" />
-        <el-table-column label="单价" prop="unitPrice" align="center" />
-        <el-table-column label="小计" prop="totalPrice" align="center" />
+        <el-table-column label="单价" prop="unitPrice" align="center">
+          <template #default="scope">¥{{ scope.row.unitPrice }}</template>
+        </el-table-column>
+        <el-table-column label="小计" prop="totalPrice" align="center">
+          <template #default="scope">¥{{ scope.row.totalPrice }}</template>
+        </el-table-column>
       </el-table>
     </el-card>
 
@@ -162,6 +188,10 @@ function submitReject() {
     rejectDialogVisible.value = false;
     getOrderDetail();
   });
+}
+
+function goToProduct(productId) {
+  router.push({ path: '/product/product', query: { productId } });
 }
 
 getOrderDetail();

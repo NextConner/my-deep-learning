@@ -3,6 +3,7 @@ package com.jtcool.oms.domain;
 import com.jtcool.common.core.domain.BaseEntity;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 public class OmsOrder extends BaseEntity {
     private Long orderId;
@@ -17,6 +18,7 @@ public class OmsOrder extends BaseEntity {
     private Long salesUserId;
     private String requireShippingPhoto;
     private String delFlag;
+    private List<OmsOrderItem> orderItems;
 
     public Long getOrderId() { return orderId; }
     public void setOrderId(Long orderId) { this.orderId = orderId; }
@@ -42,4 +44,6 @@ public class OmsOrder extends BaseEntity {
     public void setRequireShippingPhoto(String requireShippingPhoto) { this.requireShippingPhoto = requireShippingPhoto; }
     public String getDelFlag() { return delFlag; }
     public void setDelFlag(String delFlag) { this.delFlag = delFlag; }
+    public List<OmsOrderItem> getOrderItems() { return orderItems; }
+    public void setOrderItems(List<OmsOrderItem> orderItems) { this.orderItems = orderItems; }
 }

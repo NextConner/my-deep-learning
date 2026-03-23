@@ -83,8 +83,9 @@
     // menu hover
     .sub-menu-title-noDropdown,
     .el-sub-menu__title {
+      transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
       &:hover {
-        background-color: rgba(0, 0, 0, 0.06) !important;
+        background-color: var(--menu-hover) !important;
       }
     }
 
@@ -95,18 +96,27 @@
     & .nest-menu .el-sub-menu>.el-sub-menu__title,
     & .el-sub-menu .el-menu-item {
       min-width: vars.$base-sidebar-width !important;
+      transition: all 0.3s;
 
       &:hover {
-        background-color: rgba(0, 0, 0, 0.06) !important;
+        background-color: var(--menu-hover) !important;
       }
     }
 
     & .theme-dark .nest-menu .el-sub-menu>.el-sub-menu__title,
     & .theme-dark .el-sub-menu .el-menu-item {
       background-color: vars.$base-sub-menu-background;
+      margin: 4px 8px; /* 增加子菜单的间距，形成药丸形状悬浮 */
+      width: calc(100% - 16px) !important;
+      min-width: unset !important;
+      border-radius: 8px; /* 增加圆角，更柔和 */
 
       &:hover {
         background-color: vars.$base-sub-menu-hover !important;
+      }
+      
+      &.is-active {
+        background-color: rgba(139, 92, 246, 0.15) !important; /* 紫色半透明高亮，护眼且明显 */
       }
     }
   }

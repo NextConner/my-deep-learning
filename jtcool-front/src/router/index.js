@@ -48,11 +48,6 @@ export const constantRoutes = [
     hidden: true
   },
   {
-    path: "/:pathMatch(.*)*",
-    component: () => import('@/views/error/404'),
-    hidden: true
-  },
-  {
     path: '/401',
     component: () => import('@/views/error/401'),
     hidden: true
@@ -228,10 +223,23 @@ export const dynamicRoutes = [
     hidden: true,
     children: [
       {
-        path: ':orderId',
+        path: ':orderId(\\d+)',
         component: () => import('@/views/oms/order/detail'),
         name: 'OmsOrderDetail',
         meta: { title: '订单详情', activeMenu: '/oms/order' }
+      }
+    ]
+  },
+  {
+    path: '/oms/order/create',
+    component: Layout,
+    hidden: true,
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/oms/order/create'),
+        name: 'OmsOrderCreate',
+        meta: { title: '创建订单', activeMenu: '/oms/order' }
       }
     ]
   },
@@ -291,6 +299,11 @@ export const dynamicRoutes = [
         meta: { title: '出入库详情', activeMenu: '/wms/stockBill' }
       }
     ]
+  },
+  {
+    path: "/:pathMatch(.*)*",
+    component: () => import('@/views/error/404'),
+    hidden: true
   }
 ]
 

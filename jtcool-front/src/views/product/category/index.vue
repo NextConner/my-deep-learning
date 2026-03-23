@@ -119,7 +119,7 @@ const { queryParams, form, rules } = toRefs(data);
 function getList() {
   loading.value = true;
   listCategory(queryParams.value).then(response => {
-    categoryList.value = handleTree(response.data, "categoryId", "parentId");
+    categoryList.value = handleTree(response.rows, "categoryId", "parentId");
     loading.value = false;
   });
 }
