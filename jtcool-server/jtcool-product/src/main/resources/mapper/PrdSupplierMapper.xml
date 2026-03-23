@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtcool.product.mapper.PrdSupplierMapper">
+    
+    <resultMap type="com.jtcool.product.domain.PrdSupplier" id="PrdSupplierResult">
+        <result property="supplierId" column="supplier_id"/>
+        <result property="supplierName" column="supplier_name"/>
+        <result property="supplierCode" column="supplier_code"/>
+        <result property="contactPerson" column="contact_person"/>
+        <result property="contactPhone" column="contact_phone"/>
+        <result property="contactEmail" column="contact_email"/>
+        <result property="address" column="address"/>
+        <result property="status" column="status"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectPrdSupplierVo">
+        select supplier_id, supplier_name, supplier_code, contact_person, contact_phone, contact_email, address, status, del_flag, create_by, create_time, update_by, update_time, remark from prd_supplier
+    </sql>
+
+    <select id="selectPrdSupplierList" parameterType="com.jtcool.product.domain.PrdSupplier" resultMap="PrdSupplierResult">
+        <include refid="selectPrdSupplierVo"/>
+        <where>
+            del_flag = '0'
+            <if test="supplierName != null and supplierName != ''">
+                AND supplier_name like concat('%', #{supplierName}, '%')
+            </if>
+            <if test="supplierCode != null and supplierCode != ''">
+                AND supplier_code = #{supplierCode}
+            </if>
+            <if test="status != null and status != ''">
+                AND status = #{status}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectPrdSupplierById" parameterType="Long" resultMap="PrdSupplierResult">
+        <include refid="selectPrdSupplierVo"/>
+        where supplier_id = #{supplierId}
+    </select>
+
+    <insert id="insertPrdSupplier" parameterType="com.jtcool.product.domain.PrdSupplier">
+        insert into prd_supplier(supplier_name, supplier_code, contact_person, contact_phone, contact_email, address, status, create_by, create_time, remark)
+        values(#{supplierName}, #{supplierCode}, #{contactPerson}, #{contactPhone}, #{contactEmail}, #{address}, #{status}, #{createBy}, CURRENT_TIMESTAMP, #{remark})
+    </insert>
+
+    <update id="updatePrdSupplier" parameterType="com.jtcool.product.domain.PrdSupplier">
+        update prd_supplier
+        <set>
+            <if test="supplierName != null">supplier_name = #{supplierName},</if>
+            <if test="supplierCode != null">supplier_code = #{supplierCode},</if>
+            <if test="contactPerson != null">contact_person = #{contactPerson},</if>
+            <if test="contactPhone != null">contact_phone = #{contactPhone},</if>
+            <if test="contactEmail != null">contact_email = #{contactEmail},</if>
+            <if test="address != null">address = #{address},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = CURRENT_TIMESTAMP,
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where supplier_id = #{supplierId}
+    </update>
+
+    <delete id="deletePrdSupplierById" parameterType="Long">
+        update prd_supplier set del_flag = '2' where supplier_id = #{supplierId}
+    </delete>
+
+    <delete id="deletePrdSupplierByIds" parameterType="Long">
+        update prd_supplier set del_flag = '2' where supplier_id in
+        <foreach item="supplierId" collection="array" open="(" separator="," close=")">
+            #{supplierId}
+        </foreach>
+    </delete>
+
+</mapper>
