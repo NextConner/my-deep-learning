@@ -1,57 +1,57 @@
 <template>
-  <div class="app-container">
-    <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
-      <el-form-item label="品牌名称" prop="brandName">
-        <el-input v-model="queryParams.brandName" placeholder="请输入品牌名称" clearable @keyup.enter="handleQuery" />
-      </el-form-item>
-      <el-form-item label="状态" prop="status">
-        <el-select v-model="queryParams.status" placeholder="品牌状态" clearable>
-          <el-option v-for="dict in sys_normal_disable" :key="dict.value" :label="dict.label" :value="dict.value" />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-        <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-      </el-form-item>
-    </el-form>
+  <div class="brand-container">
+    <div class="page-header">
+      <div>
+        <h2 class="page-title">品牌管理</h2>
+        <p class="page-desc">管理产品品牌信息</p>
+      </div>
+      <el-button type="primary" icon="Plus" @click="handleAdd" size="large">新增品牌</el-button>
+    </div>
 
-    <el-row :gutter="10" class="mb8">
-      <el-col :span="1.5">
-        <el-button type="primary" plain icon="Plus" @click="handleAdd">新增</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete">删除</el-button>
-      </el-col>
-      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
-    </el-row>
+    <el-card shadow="never" class="search-card">
+      <el-form :model="queryParams" ref="queryRef" :inline="true">
+        <el-form-item label="品牌名称" prop="brandName">
+          <el-input v-model="queryParams.brandName" placeholder="搜索品牌" clearable @keyup.enter="handleQuery" prefix-icon="Search" />
+        </el-form-item>
+        <el-form-item label="状态" prop="status">
+          <el-select v-model="queryParams.status" placeholder="状态" clearable>
+            <el-option v-for="dict in sys_normal_disable" :key="dict.value" :label="dict.label" :value="dict.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
+          <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
 
-    <el-table v-loading="loading" :data="brandList" @selection-change="handleSelectionChange">
-      <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="品牌ID" align="center" prop="brandId" />
-      <el-table-column label="品牌名称" align="center" prop="brandName" :show-overflow-tooltip="true" />
-      <el-table-column label="品牌编码" align="center" prop="brandCode" />
-      <el-table-column label="品牌Logo" align="center" prop="logoUrl" width="100">
-        <template #default="scope">
-          <image-preview :src="scope.row.logoUrl" :width="50" :height="50" v-if="scope.row.logoUrl"/>
-        </template>
-      </el-table-column>
-      <el-table-column label="状态" align="center" prop="status">
-        <template #default="scope">
-          <dict-tag :options="sys_normal_disable" :value="scope.row.status"/>
-        </template>
-      </el-table-column>
-      <el-table-column label="创建时间" align="center" prop="createTime" width="180">
-        <template #default="scope">
-          <span>{{ parseTime(scope.row.createTime) }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
-        <template #default="scope">
-          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)">修改</el-button>
-          <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <el-card shadow="never" class="table-card" v-loading="loading">
+      <div class="brand-grid">
+        <div v-for="item in brandList" :key="item.brandId" class="brand-card">
+          <div class="brand-card__logo">
+            <img v-if="item.logoUrl" :src="item.logoUrl" alt="logo" />
+            <div v-else class="logo-placeholder">
+              <el-icon><Picture /></el-icon>
+            </div>
+          </div>
+          <div class="brand-card__body">
+            <h3 class="brand-card__name">{{ item.brandName }}</h3>
+            <div class="brand-card__code">编码: {{ item.brandCode }}</div>
+            <div class="brand-card__meta">
+              <el-tag :type="item.status === '0' ? 'success' : 'info'" size="small">
+                {{ item.status === '0' ? '启用' : '停用' }}
+              </el-tag>
+              <span class="create-time">{{ parseTime(item.createTime, '{y}-{m}-{d}') }}</span>
+            </div>
+          </div>
+          <div class="brand-card__actions">
+            <el-button link type="primary" icon="Edit" @click="handleUpdate(item)">编辑</el-button>
+            <el-button link type="danger" icon="Delete" @click="handleDelete(item)">删除</el-button>
+          </div>
+        </div>
+      </div>
+      <el-empty v-if="!loading && brandList.length === 0" description="暂无品牌数据" />
+    </el-card>
 
     <pagination v-show="total>0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
 
@@ -99,6 +99,7 @@
 
 <script setup name="ProductBrand">
 import { listBrand, getBrand, delBrand, addBrand, updateBrand } from "@/api/product/brand";
+import { Picture } from '@element-plus/icons-vue'
 
 const { proxy } = getCurrentInstance();
 const { sys_normal_disable } = proxy.useDict("sys_normal_disable");
@@ -219,3 +220,114 @@ function handleDelete(row) {
 
 getList();
 </script>
+
+<style scoped lang="scss">
+.brand-container {
+  padding: 20px;
+  background: #f5f7fa;
+  min-height: calc(100vh - 84px);
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.page-title {
+  margin: 0 0 6px;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.page-desc {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.search-card, .table-card {
+  margin-bottom: 16px;
+  border-radius: 12px;
+  border: 0;
+}
+
+.brand-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.brand-card {
+  padding: 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  transition: all 0.3s;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+  }
+}
+
+.brand-card__logo {
+  width: 100%;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  background: #f9fafb;
+  overflow: hidden;
+
+  img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+}
+
+.logo-placeholder {
+  font-size: 48px;
+  color: #d1d5db;
+}
+
+.brand-card__name {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.brand-card__code {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 12px;
+}
+
+.brand-card__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.create-time {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.brand-card__actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
+}
+</style>

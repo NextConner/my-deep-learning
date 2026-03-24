@@ -27,7 +27,20 @@
       "Bash(git remote:*)",
       "Bash(git push:*)",
       "Bash(npm run:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(ln -s /c/Users/Windows/.agents/skills/superpowers superpowers)",
+      "Bash(ln -s /c/Users/Windows/.agents/skills/frontend-code-review frontend-code-review)",
+      "Bash(ln -s /c/Users/Windows/.agents/skills/backend-code-review backend-code-review)",
+      "Bash(ln -s /c/Users/Windows/.agents/skills/frontend-design frontend-design)",
+      "Bash(find . -name *.sql -path */resources/* -o -name schema.sql)",
+      "Bash(\"D:\\\\github\\\\dev-deep-learning\\\\jtcool-server\\\\sql\\\\test_data_complete.sql\":*)",
+      "Bash(mvn test:*)",
+      "Bash(mvn clean:*)",
+      "Bash(mvn spring-boot:run)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(find ../jtcool-front/src/api -name *assistant* -o -name *ai*)",
+      "Bash(git reset:*)"
     ]
   }
 }
