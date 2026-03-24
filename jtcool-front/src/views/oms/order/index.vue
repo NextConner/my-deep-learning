@@ -1,15 +1,11 @@
 <template>
   <div class="orders-container">
-    <!-- Header Section -->
     <div class="page-header">
-      <div class="header-content">
-        <h1 class="page-title">订单管理</h1>
-        <p class="page-subtitle">Order Management System</p>
+      <div>
+        <h2 class="page-title">订单管理</h2>
+        <p class="page-desc">管理订单状态、客户归属和金额信息，优先处理新建与待推进订单。</p>
       </div>
-      <el-button type="primary" class="create-btn" @click="handleAdd">
-        <span class="btn-icon">+</span>
-        创建订单
-      </el-button>
+      <el-button type="primary" class="create-btn" @click="handleAdd">创建订单</el-button>
     </div>
 
     <!-- Search Filters -->
@@ -172,65 +168,48 @@ getList();
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600&display=swap');
-
 .orders-container {
-  min-height: 100vh;
+  min-height: calc(100vh - 84px);
   background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
-  padding: 2rem;
+  padding: 24px;
 }
 
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 3rem;
-  animation: slideDown 0.6s ease-out;
-}
-
-.header-content {
-  flex: 1;
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
 .page-title {
-  font-family: 'Playfair Display', serif;
-  font-size: 3.5rem;
-  font-weight: 900;
-  color: #1a1a2e;
-  margin: 0;
-  letter-spacing: -0.02em;
-  line-height: 1;
+  margin: 0 0 6px;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1f2937;
 }
 
-.page-subtitle {
-  font-family: 'Inter', sans-serif;
-  font-size: 0.875rem;
+.page-desc {
+  margin: 0;
+  font-size: 14px;
   color: #6b7280;
-  margin-top: 0.5rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
 }
 
 .create-btn {
-  height: 3.5rem;
-  padding: 0 2rem;
-  background: #1a1a2e;
+  height: 40px;
+  padding: 0 18px;
+  background: #409eff;
   border: none;
-  border-radius: 0.5rem;
-  font-size: 1rem;
+  border-radius: 8px;
+  font-size: 14px;
   font-weight: 600;
   transition: all 0.3s ease;
 }
 
 .create-btn:hover {
-  background: #16213e;
+  background: #66b1ff;
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(26, 26, 46, 0.3);
-}
-
-.btn-icon {
-  font-size: 1.5rem;
-  margin-right: 0.5rem;
+  box-shadow: 0 8px 20px rgba(64, 158, 255, 0.24);
 }
 
 .search-section {
@@ -374,6 +353,5 @@ getList();
   to { opacity: 1; transform: translateY(0); }
 }
 </style>
-
 
 

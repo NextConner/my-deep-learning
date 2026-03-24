@@ -5,7 +5,10 @@ import java.util.Date;
 public class WmsInventory {
     private Long inventoryId;
     private Long productId;
+    private String productName;
+    private Integer warningStock;
     private Long warehouseId;
+    private String warehouseName;
     private Long areaId;
     private Long locationId;
     private Long shelfId;
@@ -21,8 +24,14 @@ public class WmsInventory {
     public void setInventoryId(Long inventoryId) { this.inventoryId = inventoryId; }
     public Long getProductId() { return productId; }
     public void setProductId(Long productId) { this.productId = productId; }
+    public String getProductName() { return productName; }
+    public void setProductName(String productName) { this.productName = productName; }
+    public Integer getWarningStock() { return warningStock; }
+    public void setWarningStock(Integer warningStock) { this.warningStock = warningStock; }
     public Long getWarehouseId() { return warehouseId; }
     public void setWarehouseId(Long warehouseId) { this.warehouseId = warehouseId; }
+    public String getWarehouseName() { return warehouseName; }
+    public void setWarehouseName(String warehouseName) { this.warehouseName = warehouseName; }
     public Long getAreaId() { return areaId; }
     public void setAreaId(Long areaId) { this.areaId = areaId; }
     public Long getLocationId() { return locationId; }

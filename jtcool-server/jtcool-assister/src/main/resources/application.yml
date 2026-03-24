@@ -5,7 +5,7 @@ spring:
   application:
     name: learn-from-claude
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:h2}
+    active: ${SPRING_PROFILES_ACTIVE:pgsql}
   security:
     strategy: MODE_INHERITABLETHREADLOCAL
   sql:

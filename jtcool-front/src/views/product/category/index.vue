@@ -28,7 +28,7 @@
     <el-table v-if="refreshTable" v-loading="loading" :data="categoryList" row-key="categoryId" :default-expand-all="isExpandAll" :tree-props="{children: 'children', hasChildren: 'hasChildren'}">
       <el-table-column prop="categoryName" label="分类名称" :show-overflow-tooltip="true" width="260"></el-table-column>
       <el-table-column prop="categoryCode" label="分类编码" :show-overflow-tooltip="true"></el-table-column>
-      <el-table-column prop="sortOrder" label="排序" width="200"></el-table-column>
+      <el-table-column prop="orderNum" label="排序" width="200"></el-table-column>
       <el-table-column prop="status" label="状态" width="100">
         <template #default="scope">
           <dict-tag :options="sys_normal_disable" :value="scope.row.status"/>
@@ -68,8 +68,8 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="显示排序" prop="sortOrder">
-              <el-input-number v-model="form.sortOrder" controls-position="right" :min="0" />
+            <el-form-item label="显示排序" prop="orderNum">
+              <el-input-number v-model="form.orderNum" controls-position="right" :min="0" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -116,7 +116,7 @@ const data = reactive({
   rules: {
     categoryName: [{ required: true, message: "分类名称不能为空", trigger: "blur" }],
     categoryCode: [{ required: true, message: "分类编码不能为空", trigger: "blur" }],
-    sortOrder: [{ required: true, message: "显示排序不能为空", trigger: "blur" }]
+    orderNum: [{ required: true, message: "显示排序不能为空", trigger: "blur" }]
   }
 });
 
@@ -149,7 +149,7 @@ function reset() {
     parentId: 0,
     categoryName: undefined,
     categoryCode: undefined,
-    sortOrder: 0,
+    orderNum: 0,
     status: "0"
   };
   proxy.resetForm("categoryRef");
@@ -180,7 +180,7 @@ function getTreeselect() {
   listCategory().then(response => {
     categoryOptions.value = [];
     const data = { categoryId: 0, categoryName: '主类目', children: [] };
-    data.children = handleTree(response.data, "categoryId", "parentId");
+    data.children = handleTree(response.rows, "categoryId", "parentId");
     categoryOptions.value.push(data);
   });
 }

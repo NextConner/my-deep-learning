@@ -6,6 +6,8 @@ import java.util.Date;
 public class OmsOrderStatistics {
     private Long statId;
     private Date statDate;
+    private Date beginTime;
+    private Date endTime;
     private String statType;
     private Long customerId;
     private Long salesUserId;
@@ -19,6 +21,10 @@ public class OmsOrderStatistics {
     public void setStatId(Long statId) { this.statId = statId; }
     public Date getStatDate() { return statDate; }
     public void setStatDate(Date statDate) { this.statDate = statDate; }
+    public Date getBeginTime() { return beginTime; }
+    public void setBeginTime(Date beginTime) { this.beginTime = beginTime; }
+    public Date getEndTime() { return endTime; }
+    public void setEndTime(Date endTime) { this.endTime = endTime; }
     public String getStatType() { return statType; }
     public void setStatType(String statType) { this.statType = statType; }
     public Long getCustomerId() { return customerId; }

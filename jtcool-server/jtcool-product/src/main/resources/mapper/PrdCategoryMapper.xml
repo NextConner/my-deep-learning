@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jtcool.product.mapper.PrdCategoryMapper">
+
+    <resultMap type="com.jtcool.product.domain.PrdCategory" id="PrdCategoryResult">
+        <id property="categoryId" column="category_id"/>
+        <result property="parentId" column="parent_id"/>
+        <result property="ancestors" column="ancestors"/>
+        <result property="categoryName" column="category_name"/>
+        <result property="categoryCode" column="category_code"/>
+        <result property="orderNum" column="order_num"/>
+        <result property="status" column="status"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectPrdCategoryVo">
+        select category_id, parent_id, ancestors, category_name, category_code, order_num,
+               status, del_flag, create_by, create_time, update_by, update_time, remark
+        from prd_category
+    </sql>
+
+    <select id="selectPrdCategoryList" parameterType="com.jtcool.product.domain.PrdCategory" resultMap="PrdCategoryResult">
+        <include refid="selectPrdCategoryVo"/>
+        <where>
+            del_flag = '0'
+            <if test="categoryName != null and categoryName != ''">
+                and category_name like concat('%', #{categoryName}, '%')
+            </if>
+            <if test="categoryCode != null and categoryCode != ''">
+                and category_code = #{categoryCode}
+            </if>
+            <if test="status != null and status != ''">
+                and status = #{status}
+            </if>
+            <if test="parentId != null">
+                and parent_id = #{parentId}
+            </if>
+        </where>
+        order by order_num asc, category_id asc
+    </select>
+
+    <select id="selectPrdCategoryById" parameterType="Long" resultMap="PrdCategoryResult">
+        <include refid="selectPrdCategoryVo"/>
+        where category_id = #{categoryId} and del_flag = '0'
+    </select>
+
+    <insert id="insertPrdCategory" parameterType="com.jtcool.product.domain.PrdCategory" useGeneratedKeys="true" keyProperty="categoryId">
+        insert into prd_category(
+            parent_id, ancestors, category_name, category_code, order_num,
+            status, del_flag, create_by, create_time, remark
+        ) values (
+            #{parentId}, #{ancestors}, #{categoryName}, #{categoryCode}, #{orderNum},
+            #{status}, '0', #{createBy}, CURRENT_TIMESTAMP, #{remark}
+        )
+    </insert>
+
+    <update id="updatePrdCategory" parameterType="com.jtcool.product.domain.PrdCategory">
+        update prd_category
+        <trim prefix="set" suffixOverrides=",">
+            <if test="parentId != null">parent_id = #{parentId},</if>
+            <if test="ancestors != null">ancestors = #{ancestors},</if>
+            <if test="categoryName != null and categoryName != ''">category_name = #{categoryName},</if>
+            <if test="categoryCode != null and categoryCode != ''">category_code = #{categoryCode},</if>
+            <if test="orderNum != null">order_num = #{orderNum},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = CURRENT_TIMESTAMP,
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where category_id = #{categoryId}
+    </update>
+
+    <delete id="deletePrdCategoryById" parameterType="Long">
+        update prd_category
+        set del_flag = '2', update_time = CURRENT_TIMESTAMP
+        where category_id = #{categoryId}
+    </delete>
+
+</mapper>
