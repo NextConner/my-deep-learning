@@ -8,6 +8,7 @@ import com.claude.learn.config.AgentRuntimeProperties;
 import com.claude.learn.service.AgentOrchestratorService;
 import com.claude.learn.service.OutputSecurityService;
 import com.claude.learn.service.PromptService;
+import com.claude.learn.service.QuestionSuggestionService;
 import com.claude.learn.service.TokenMonitorService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -51,6 +53,7 @@ public class ChatController {
     private final AgentRuntimeProperties runtimeProperties;
     private final OutputSecurityService outputSecurityService;
     private final ObjectMapper objectMapper;
+    private final QuestionSuggestionService questionSuggestionService;
 
     public ChatController(PolicyAgent policyAgent,
                           TokenMonitorService tokenMonitorService,
@@ -58,7 +61,8 @@ public class ChatController {
                           AgentOrchestratorService agentOrchestratorService,
                           AgentRuntimeProperties runtimeProperties,
                           OutputSecurityService outputSecurityService,
-                          ObjectMapper objectMapper) {
+                          ObjectMapper objectMapper,
+                          QuestionSuggestionService questionSuggestionService) {
         this.policyAgent = policyAgent;
         this.tokenMonitorService = tokenMonitorService;
         this.promptService = promptService;
@@ -66,6 +70,7 @@ public class ChatController {
         this.runtimeProperties = runtimeProperties;
         this.outputSecurityService = outputSecurityService;
         this.objectMapper = objectMapper;
+        this.questionSuggestionService = questionSuggestionService;
     }
 
     @GetMapping("/usage")
@@ -75,6 +80,12 @@ public class ChatController {
                 "username", username,
                 "summary", tokenMonitorService.getUsageSummary(username)
         ));
+    }
+
+    @PostMapping("/suggestions")
+    public ResponseEntity<?> getQuestionSuggestions(@RequestBody RouteContext routeContext) {
+        List<String> suggestions = questionSuggestionService.getSuggestions(routeContext.module());
+        return ResponseEntity.ok(Map.of("suggestions", suggestions));
     }
 
     @PostMapping("/chat")
@@ -242,6 +253,9 @@ public class ChatController {
     }
 
     public record ChatRequest(String message) {
+    }
+
+    public record RouteContext(String path, String name, String module) {
     }
 
     private String getCurrentUsername() {

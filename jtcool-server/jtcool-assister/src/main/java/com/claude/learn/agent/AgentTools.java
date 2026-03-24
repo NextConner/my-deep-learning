@@ -1,10 +1,12 @@
 package com.claude.learn.agent;
 
 import com.claude.learn.service.HybridSearchService;
+import com.claude.learn.service.DatabaseQueryService;
 import com.claude.learn.service.ToolPolicyGuardService;
 import dev.langchain4j.agent.tool.Tool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -16,11 +18,14 @@ public class AgentTools {
 
     private final HybridSearchService hybridSearchService;
     private final ToolPolicyGuardService toolPolicyGuardService;
+    private final DatabaseQueryService databaseQueryService;
 
     public AgentTools(HybridSearchService hybridSearchService,
-                      ToolPolicyGuardService toolPolicyGuardService) {
+                      ToolPolicyGuardService toolPolicyGuardService,
+                      DatabaseQueryService databaseQueryService) {
         this.hybridSearchService = hybridSearchService;
         this.toolPolicyGuardService = toolPolicyGuardService;
+        this.databaseQueryService = databaseQueryService;
     }
 
     /**
@@ -51,5 +56,13 @@ public class AgentTools {
         toolPolicyGuardService.checkToolAccess("sendEmail");
         // 模拟发送邮件
         return "邮件已发送给：" + recipient;
+    }
+
+    @Tool("查询业务数据库。支持查询订单、库存、商品等业务数据。参数是标准的SQL SELECT语句，例如：SELECT * FROM oms_order WHERE order_status='PENDING' LIMIT 10")
+    public String queryDatabase(String sqlQuery) {
+        toolPolicyGuardService.checkToolAccess("queryDatabase");
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        log.info("Database query by {}: {}", username, sqlQuery);
+        return databaseQueryService.executeQuery(sqlQuery, username);
     }
 }

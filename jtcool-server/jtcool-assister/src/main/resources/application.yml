@@ -58,6 +58,10 @@ agent:
     max-steps: 3
     step-timeout-ms: 15000
     retry-times: 1
+  database:
+    query-timeout: 5000
+    max-rows: 100
+    allowed-schemas: [public]
 
 # application.yml
 #langchain4j:

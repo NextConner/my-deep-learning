@@ -55,4 +55,20 @@ public class SecurityAuditService {
             log.warn("Failed to persist security audit log: {}", e.getMessage());
         }
     }
+
+    public void logDatabaseQuery(String username, String sql, int resultCount) {
+        try {
+            AuditLog entry = new AuditLog();
+            entry.setTraceId(UUID.randomUUID().toString());
+            entry.setAction("DATABASE_QUERY");
+            entry.setResource(sql);
+            entry.setDecision("ALLOWED");
+            entry.setReason("Result count: " + resultCount);
+            entry.setUsername(username);
+            entry.setUserId(username);
+            auditLogRepository.save(entry);
+        } catch (Exception e) {
+            log.warn("Failed to persist database query audit log: {}", e.getMessage());
+        }
+    }
 }

@@ -21,7 +21,25 @@
 /assister-server/target/
 */target/
 .claude/settings.local.json
-.claude/settings.local.json
 .claude
 /.claude/
-.claude/settings.local.json
+
+# Docker files
+*.dockerignore
+Dockerfile*
+docker-compose*.yml
+deploy/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Logs
+logs/
+*.log
+
+# Build
+target/
+dist/
+node_modules/

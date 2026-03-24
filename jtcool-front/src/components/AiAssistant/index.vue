@@ -71,6 +71,19 @@
             </el-button>
           </header>
 
+          <div v-if="suggestedQuestions.length" class="assistant-suggestions">
+            <div class="assistant-suggestions__title">您可能想问：</div>
+            <el-tag
+              v-for="(q, idx) in suggestedQuestions"
+              :key="idx"
+              @click="askQuestion(q)"
+              class="suggestion-tag"
+              type="info"
+            >
+              {{ q }}
+            </el-tag>
+          </div>
+
           <div ref="messagesRef" class="assistant-messages">
             <div v-if="!currentMessages.length" class="assistant-empty">
               <div class="assistant-empty__title">开始一段新的对话</div>
@@ -163,12 +176,14 @@
 
 <script setup>
 import { nextTick } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Close, Delete, Microphone, Plus, Service, WarningFilled } from '@element-plus/icons-vue'
 import cache from '@/plugins/cache'
 import useUserStore from '@/store/modules/user'
-import { getAssistantEnterpriseInfo, getAssistantUsage, streamAssistantChat } from '@/api/assistant'
+import { getAssistantEnterpriseInfo, getAssistantUsage, streamAssistantChat, getQuestionSuggestions } from '@/api/assistant'
 
+const route = useRoute()
 const userStore = useUserStore()
 const drawerVisible = ref(false)
 const sending = ref(false)
@@ -183,6 +198,7 @@ const detailMessage = ref(null)
 const speechSupported = ref(false)
 const isRecording = ref(false)
 const recognitionRef = ref(null)
+const suggestedQuestions = ref([])
 
 const categories = [
   { id: 'tech', name: '技术咨询' },
@@ -258,6 +274,7 @@ function openDrawer() {
   if (!sessions.value.length) {
     createSession()
   }
+  fetchQuestionSuggestions()
   nextTick(scrollToBottom)
 }
 
@@ -316,6 +333,41 @@ async function refreshMeta() {
     const [enterprise, usage] = await Promise.all([
       getAssistantEnterpriseInfo(),
       getAssistantUsage().catch(() => null)
+    ])
+    enterpriseName.value = enterprise?.name || '企业'
+    usageSummary.value = usage?.summary || '今日用量待同步'
+  } catch (error) {
+    console.error('Failed to refresh meta:', error)
+  } finally {
+    metaLoading.value = false
+  }
+}
+
+function detectModule(path) {
+  if (path.includes('/oms/')) return 'OMS'
+  if (path.includes('/wms/')) return 'WMS'
+  if (path.includes('/product/')) return 'PRODUCT'
+  return 'GENERAL'
+}
+
+async function fetchQuestionSuggestions() {
+  try {
+    const routeContext = {
+      path: route.path,
+      name: route.name,
+      module: detectModule(route.path)
+    }
+    const response = await getQuestionSuggestions(routeContext)
+    suggestedQuestions.value = response.suggestions || []
+  } catch (error) {
+    console.error('Failed to fetch suggestions:', error)
+  }
+}
+
+function askQuestion(question) {
+  input.value = question
+  sendMessage()
+}
     ])
     enterpriseName.value = enterprise.name || enterpriseName.value
     usageSummary.value = usage?.summary || '今日用量待同步'
@@ -635,6 +687,28 @@ function safeParse(payload) {
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid #e5e7eb;
+}
+
+.assistant-suggestions {
+  padding: 12px 20px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.assistant-suggestions__title {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.suggestion-tag {
+  margin-right: 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.suggestion-tag:hover {
+  opacity: 0.8;
 }
 
 .assistant-messages {

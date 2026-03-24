@@ -31,7 +31,8 @@ async function requestJson(path, options = {}) {
 
   const response = await fetch(createUrl(path), {
     method: options.method || 'GET',
-    headers
+    headers,
+    body: options.body
   })
 
   const data = await response.json().catch(() => ({}))
@@ -50,6 +51,14 @@ export function getAssistantEnterpriseInfo() {
 
 export function getAssistantUsage() {
   return requestJson('/api/usage')
+}
+
+export function getQuestionSuggestions(routeContext) {
+  return requestJson('/api/suggestions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(routeContext)
+  })
 }
 
 export async function streamAssistantChat(message, handlers = {}) {
