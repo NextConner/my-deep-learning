@@ -368,15 +368,6 @@ function askQuestion(question) {
   input.value = question
   sendMessage()
 }
-    ])
-    enterpriseName.value = enterprise.name || enterpriseName.value
-    usageSummary.value = usage?.summary || '今日用量待同步'
-  } catch (error) {
-    usageSummary.value = '助手服务未连接'
-  } finally {
-    metaLoading.value = false
-  }
-}
 
 function updateCurrentSession(updater) {
   sessions.value = sessions.value.map((session) => {

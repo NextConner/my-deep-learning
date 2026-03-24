@@ -1,6 +1,7 @@
 <template>
-  <div class="app-container">
-    <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
+  <div class="app-container modern-page">
+    <div class="search-card">
+      <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
       <el-form-item label="分类名称" prop="categoryName">
         <el-input v-model="queryParams.categoryName" placeholder="请输入分类名称" clearable @keyup.enter="handleQuery" />
       </el-form-item>
@@ -9,8 +10,10 @@
         <el-button icon="Refresh" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
+    </div>
 
-    <el-row :gutter="10" class="mb8">
+    <div class="action-bar">
+    <el-row :gutter="10">
       <el-col :span="1.5">
         <el-button type="primary" plain icon="Plus" @click="handleAdd">新增</el-button>
       </el-col>
@@ -19,7 +22,9 @@
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
+    </div>
 
+    <div class="table-card">
     <el-table v-if="refreshTable" v-loading="loading" :data="categoryList" row-key="categoryId" :default-expand-all="isExpandAll" :tree-props="{children: 'children', hasChildren: 'hasChildren'}">
       <el-table-column prop="categoryName" label="分类名称" :show-overflow-tooltip="true" width="260"></el-table-column>
       <el-table-column prop="categoryCode" label="分类编码" :show-overflow-tooltip="true"></el-table-column>
@@ -42,8 +47,9 @@
         </template>
       </el-table-column>
     </el-table>
+    </div>
 
-    <el-dialog :title="title" v-model="open" width="600px" append-to-body>
+    <el-dialog :title="title" v-model="open" width="600px" append-to-body class="modern-dialog">
       <el-form ref="categoryRef" :model="form" :rules="rules" label-width="80px">
         <el-row>
           <el-col :span="24" v-if="form.parentId !== 0">
@@ -220,3 +226,7 @@ function handleDelete(row) {
 
 getList();
 </script>
+
+<style lang="scss" scoped>
+@import "@/assets/styles/modern-page.scss";
+</style>

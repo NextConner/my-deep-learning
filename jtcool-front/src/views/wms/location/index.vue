@@ -1,5 +1,6 @@
 <template>
-  <div class="app-container">
+  <div class="app-container modern-page">
+    <div class="search-card">
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
       <el-form-item label="仓库" prop="warehouseId">
         <el-select v-model="queryParams.warehouseId" placeholder="请选择仓库" clearable>
@@ -11,14 +12,18 @@
         <el-button icon="Refresh" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
+    </div>
 
-    <el-row :gutter="10" class="mb8">
+    <div class="action-bar">
+    <el-row :gutter="10">
       <el-col :span="1.5">
         <el-button type="primary" plain icon="Plus" @click="handleAdd">新增</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
+    </div>
 
+    <div class="table-card">
     <el-table v-loading="loading" :data="locationList" row-key="id" :tree-props="{children: 'children'}">
       <el-table-column label="名称" prop="name" width="200" />
       <el-table-column label="编码" prop="code" />
@@ -43,8 +48,9 @@
         </template>
       </el-table-column>
     </el-table>
+    </div>
 
-    <el-dialog :title="title" v-model="open" width="600px">
+    <el-dialog :title="title" v-model="open" width="600px" class="modern-dialog">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="类型" prop="type">
           <el-radio-group v-model="form.type" :disabled="form.parentId">
@@ -264,3 +270,8 @@ function handleDelete(row) {
 
 getList();
 </script>
+
+<style lang="scss" scoped>
+@import "@/assets/styles/modern-page.scss";
+</style>
+

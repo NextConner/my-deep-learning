@@ -1,5 +1,6 @@
 <template>
-  <div class="app-container">
+  <div class="app-container modern-page">
+    <div class="search-card">
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
       <el-form-item label="供应商名称" prop="supplierName">
         <el-input v-model="queryParams.supplierName" placeholder="请输入供应商名称" clearable @keyup.enter="handleQuery" />
@@ -17,8 +18,10 @@
         <el-button icon="Refresh" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
+    </div>
 
-    <el-row :gutter="10" class="mb8">
+    <div class="action-bar">
+    <el-row :gutter="10">
       <el-col :span="1.5">
         <el-button type="primary" plain icon="Plus" @click="handleAdd">新增</el-button>
       </el-col>
@@ -27,7 +30,9 @@
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
+    </div>
 
+    <div class="table-card">
     <el-table v-loading="loading" :data="supplierList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="供应商ID" align="center" prop="supplierId" />
@@ -49,8 +54,9 @@
     </el-table>
 
     <pagination v-show="total>0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
+    </div>
 
-    <el-dialog :title="title" v-model="open" width="600px" append-to-body>
+    <el-dialog :title="title" v-model="open" width="600px" append-to-body class="modern-dialog">
       <el-form ref="supplierRef" :model="form" :rules="rules" label-width="100px">
         <el-row>
           <el-col :span="12">
@@ -229,3 +235,8 @@ function handleDelete(row) {
 
 getList();
 </script>
+
+<style lang="scss" scoped>
+@import "@/assets/styles/modern-page.scss";
+</style>
+
