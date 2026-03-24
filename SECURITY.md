@@ -2,20 +2,70 @@
 
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+当前项目支持的版本及安全更新策略：
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+| Version | Supported          | Notes                    |
+| ------- | ------------------ | ------------------------ |
+| 3.9.x   | :white_check_mark: | 当前开发版本             |
+| < 3.9   | :x:                | 不再提供安全更新         |
 
 ## Reporting a Vulnerability
 
-Use this section to tell people how to report a vulnerability.
+如果您发现安全漏洞，请通过以下方式报告：
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+### 报告渠道
+- 通过项目 Issue 提交（标记为 Security）
+- 或发送邮件至项目维护者
+
+### 响应时间
+- 我们会在 **48 小时内**确认收到您的报告
+- 在 **7 个工作日内**提供初步评估
+- 根据漏洞严重程度，在 **30 天内**发布修复版本
+
+### 漏洞处理流程
+1. **接收报告**：确认漏洞详情和影响范围
+2. **评估优先级**：根据 CVSS 评分确定严重程度
+3. **开发修复**：在私有分支开发补丁
+4. **测试验证**：确保修复有效且不引入新问题
+5. **发布更新**：发布安全补丁并更新文档
+6. **公开披露**：在修复发布后公开漏洞详情
+
+## Security Features
+
+### 认证与授权
+- 支持双鉴权模式：`local-jwt` / `enterprise-jwt`
+- JWT Token 过期管理
+- 基于角色的访问控制（RBAC）
+
+### 数据安全
+- 敏感数据加密存储
+- SQL 注入防护（MyBatis 参数化查询）
+- XSS 防护
+
+### API 安全
+- 输入验证和清洗
+- 输出脱敏
+- 请求频率限制
+- 安全审计日志
+
+### 依赖安全
+- 定期更新依赖版本
+- 使用 Maven 依赖检查工具
+- 关注 CVE 安全公告
+
+## Best Practices
+
+开发时请遵循以下安全最佳实践：
+
+1. **不要在代码中硬编码敏感信息**（密码、密钥、Token）
+2. **使用环境变量或配置文件管理敏感配置**
+3. **定期更新依赖库**，修复已知漏洞
+4. **遵循最小权限原则**，仅授予必要的访问权限
+5. **对用户输入进行严格验证**
+6. **使用参数化查询**防止 SQL 注入
+7. **启用 HTTPS**，保护数据传输安全
+8. **定期备份数据库**
+
+## Contact
+
+如有安全相关问题，请联系项目维护团队。

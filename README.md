@@ -2,17 +2,20 @@
 
 企业内部 AI 项目（后端 + 前端配套）的工程化实践仓库。
 
-- 后端：`jtcool-assister`（Java 21 + Spring Boot 3.x + LangChain4j 0.36.2）
-- 前端：`assist-app`（配套 Web App，建议与后端按同一环境变量规范联调）
+- 后端：`jtcool-server`（Java 21 + Spring Boot 3.x + MyBatis）
+  - `jtcool-assister`：AI 助手服务（LangChain4j 0.36.2）
+  - `jtcool-oms`：订单管理系统
+  - `jtcool-wms`：仓库管理系统
+  - `jtcool-product`：产品档案管理
+- 前端：`jtcool-front`（Vue 3 + Element Plus）
 
-> 说明：当前仓库中包含后端完整代码与一个内置静态前端页面（Vue3 CDN 版）。`assist-app` 可作为独立前端工程接入同一后端 API。
+> 说明：当前仓库包含完整的ERP系统（OMS/WMS/产品档案）和AI助手服务。
 
 ---
 
 ## 1. 项目能力概览
 
-当前后端已覆盖企业内部 AI 常见核心能力：
-
+### AI 助手服务（jtcool-assister）
 - RAG（向量检索 + 关键词检索 Hybrid Search）
 - 多 Agent 编排与 Plan 模式
 - 动态 Prompt / 配置化多模型加载
@@ -21,18 +24,28 @@
 - 安全网关（Phase A）：输入检测、工具权限网关、输出脱敏
 - 安全审计日志（`audit_log`）
 
+### ERP 核心模块
+- **OMS（订单管理系统）**：客户管理、订单管理、财务管理、订单统计
+- **WMS（仓库管理系统）**：仓库管理、库存管理、出入库单管理、库存统计
+- **产品档案管理**：品牌管理、分类管理、产品信息管理
+
 ---
 
 ## 2. 目录结构
 
 ```text
-my-deep-learning/
+dev-deep-learning/
 ├─ jtcool-server/
-│  ├─ jtcool-assister/           # AI 助手服务（Spring Boot）
-│  │  ├─ src/main/java/...       # Controller / Service / Agent / Security / Filter
-│  │  ├─ src/main/resources/     # application.yml / schema.sql / static
-│  │  └─ pom.xml
+│  ├─ jtcool-assister/           # AI 助手服务（Spring Boot + LangChain4j）
+│  ├─ jtcool-oms/                # 订单管理系统
+│  ├─ jtcool-wms/                # 仓库管理系统
+│  ├─ jtcool-product/            # 产品档案管理
+│  ├─ jtcool-common/             # 公共模块
+│  ├─ jtcool-framework/          # 框架模块
+│  ├─ jtcool-system/             # 系统管理
+│  ├─ jtcool-admin/              # 后台管理入口
 │  └─ pom.xml                    # Maven 聚合工程
+├─ jtcool-front/                 # Vue3 前端项目
 └─ README.md                     # 仓库总说明（本文件）
 ```
 
@@ -124,9 +137,24 @@ CREATE EXTENSION IF NOT EXISTS vector;
 
 ## 8. 开发与测试
 
-后端测试命令：
+### 后端测试
 
+项目采用TDD（测试驱动开发）模式，已为核心模块添加单元测试：
+
+**OMS模块测试**：
 ```bash
+cd jtcool-server/jtcool-oms
+mvn test
+```
+
+测试覆盖：
+- 订单CRUD操作
+- 订单状态更新
+- 客户管理
+
+**运行所有测试**：
+```bash
+cd jtcool-server
 mvn test
 ```
 
