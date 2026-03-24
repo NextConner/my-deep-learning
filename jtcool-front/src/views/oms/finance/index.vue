@@ -1,5 +1,6 @@
 <template>
-  <div class="app-container">
+  <div class="app-container modern-page">
+    <div class="search-card">
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
       <el-form-item label="订单号" prop="orderNo">
         <el-input v-model="queryParams.orderNo" placeholder="请输入订单号" clearable @keyup.enter="handleQuery" />
@@ -22,14 +23,18 @@
         <el-button icon="Refresh" @click="resetQuery">重置</el-button>
       </el-form-item>
     </el-form>
+    </div>
 
-    <el-row :gutter="10" class="mb8">
+    <div class="action-bar">
+    <el-row :gutter="10">
       <el-col :span="1.5">
         <el-button type="primary" icon="Plus" @click="handleAdd">新增</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
+    </div>
 
+    <div class="table-card">
     <el-table v-loading="loading" :data="financeList">
       <el-table-column label="订单号" align="center" prop="orderNo" width="180" />
       <el-table-column label="财务类型" align="center" prop="financeType">
@@ -63,8 +68,9 @@
     </el-table>
 
     <pagination v-show="total>0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
+    </div>
 
-    <el-dialog :title="title" v-model="addDialogVisible" width="600px">
+    <el-dialog :title="title" v-model="addDialogVisible" width="600px" class="modern-dialog">
       <el-form :model="addForm" :rules="addRules" ref="addRef" label-width="100px">
         <el-form-item label="选择订单" prop="orderId">
           <el-select v-model="addForm.orderId" placeholder="请选择订单" filterable @change="handleOrderChange">
@@ -87,7 +93,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog title="添加收付款记录" v-model="paymentDialogVisible" width="500px">
+    <el-dialog title="添加收付款记录" v-model="paymentDialogVisible" width="500px" class="modern-dialog">
       <el-form :model="paymentForm" :rules="paymentRules" ref="paymentRef" label-width="100px">
         <el-form-item label="收付款金额" prop="paymentAmount">
           <el-input-number v-model="paymentForm.paymentAmount" :precision="2" :min="0" :max="currentFinance.unpaidAmount" />
@@ -110,7 +116,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog title="更新发票信息" v-model="invoiceDialogVisible" width="500px">
+    <el-dialog title="更新发票信息" v-model="invoiceDialogVisible" width="500px" class="modern-dialog">
       <el-form :model="invoiceForm" :rules="invoiceRules" ref="invoiceRef" label-width="100px">
         <el-form-item label="发票号" prop="invoiceNo">
           <el-input v-model="invoiceForm.invoiceNo" placeholder="请输入发票号" />
@@ -274,3 +280,8 @@ function submitInvoice() {
 
 getList();
 </script>
+
+<style lang="scss" scoped>
+@import "@/assets/styles/modern-page.scss";
+</style>
+

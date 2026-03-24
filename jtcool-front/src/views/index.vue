@@ -201,6 +201,7 @@
 </template>
 
 <script setup name="Index">
+import { reactive, ref, computed } from 'vue'
 import { Box, DocumentChecked, Histogram, ShoppingCart } from '@element-plus/icons-vue'
 
 const dialogs = reactive({
