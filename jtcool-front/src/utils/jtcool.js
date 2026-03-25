@@ -10,20 +10,35 @@ export function parseTime(time, pattern) {
   }
   const format = pattern || '{y}-{m}-{d} {h}:{i}:{s}'
   let date
+  let formatObj
   if (typeof time === 'object') {
     date = time
   } else {
     if ((typeof time === 'string') && (/^[0-9]+$/.test(time))) {
       time = parseInt(time)
+    } else if (typeof time === 'string' && /([zZ]|[+-]\d{2}:\d{2})$/.test(time)) {
+      const utcDate = new Date(time)
+      const east8Date = new Date(utcDate.getTime() + 8 * 60 * 60 * 1000)
+      formatObj = {
+        y: east8Date.getUTCFullYear(),
+        m: east8Date.getUTCMonth() + 1,
+        d: east8Date.getUTCDate(),
+        h: east8Date.getUTCHours(),
+        i: east8Date.getUTCMinutes(),
+        s: east8Date.getUTCSeconds(),
+        a: east8Date.getUTCDay()
+      }
     } else if (typeof time === 'string') {
       time = time.replace(new RegExp(/-/gm), '/').replace('T', ' ').replace(new RegExp(/\.[\d]{3}/gm), '')
     }
-    if ((typeof time === 'number') && (time.toString().length === 10)) {
-      time = time * 1000
+    if (!formatObj) {
+      if ((typeof time === 'number') && (time.toString().length === 10)) {
+        time = time * 1000
+      }
+      date = new Date(time)
     }
-    date = new Date(time)
   }
-  const formatObj = {
+  formatObj = formatObj || {
     y: date.getFullYear(),
     m: date.getMonth() + 1,
     d: date.getDate(),

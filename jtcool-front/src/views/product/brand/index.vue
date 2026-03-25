@@ -41,7 +41,7 @@
               <el-tag :type="item.status === '0' ? 'success' : 'info'" size="small">
                 {{ item.status === '0' ? '启用' : '停用' }}
               </el-tag>
-              <span class="create-time">{{ parseTime(item.createTime, '{y}-{m}-{d}') }}</span>
+              <span class="create-time">{{ parseTime(item.createTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
             </div>
           </div>
           <div class="brand-card__actions">

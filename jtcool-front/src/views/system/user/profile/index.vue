@@ -35,7 +35,7 @@
                      </li>
                      <li class="list-group-item">
                         <svg-icon icon-class="date" />创建日期
-                        <div class="pull-right">{{ state.user.createTime }}</div>
+                        <div class="pull-right">{{ parseTime(state.user.createTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</div>
                      </li>
                   </ul>
                </div>
@@ -67,6 +67,7 @@ import userAvatar from "./userAvatar"
 import userInfo from "./userInfo"
 import resetPwd from "./resetPwd"
 import { getUserProfile } from "@/api/system/user"
+import { parseTime } from '@/utils/jtcool'
 
 const route = useRoute()
 const selectedTab = ref("userinfo")

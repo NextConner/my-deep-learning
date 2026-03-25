@@ -1,105 +1,182 @@
 <template>
-  <div class="app-container">
-    <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
-      <el-form-item label="产品" prop="productId">
-        <el-select v-model="queryParams.productId" placeholder="请选择产品" clearable filterable>
+  <div class="inventory-analysis">
+    <!-- 头部 -->
+    <div class="header">
+      <h2>库存流水三维分析</h2>
+      <div class="controls">
+        <el-select v-model="queryParams.warehouseId" placeholder="仓库" clearable size="small" @change="handleQuery">
+          <el-option v-for="item in warehouseOptions" :key="item.warehouseId" :label="item.warehouseName" :value="item.warehouseId" />
+        </el-select>
+        <el-select v-model="queryParams.productId" placeholder="产品" clearable filterable size="small" @change="handleQuery">
           <el-option v-for="item in productOptions" :key="item.productId" :label="item.productName" :value="item.productId" />
         </el-select>
-      </el-form-item>
-      <el-form-item label="变更类型" prop="changeType">
-        <el-select v-model="queryParams.changeType" placeholder="变更类型" clearable>
-          <el-option label="入库" value="IN" />
-          <el-option label="出库" value="OUT" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="日期范围">
-        <el-date-picker v-model="dateRange" type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" />
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-        <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-      </el-form-item>
-    </el-form>
+        <el-radio-group v-model="timeUnit" size="small" @change="handleQuery">
+          <el-radio-button label="hour">小时</el-radio-button>
+          <el-radio-button label="day">天</el-radio-button>
+        </el-radio-group>
+        <el-date-picker v-model="dateRange" type="daterange" size="small" value-format="YYYY-MM-DD" @change="handleQuery" />
+      </div>
+    </div>
 
-    <el-table v-loading="loading" :data="logList">
-      <el-table-column label="产品名称" align="center" prop="productName" :show-overflow-tooltip="true" />
-      <el-table-column label="单据号" align="center" prop="billNo" width="180" />
-      <el-table-column label="变更类型" align="center" prop="changeType">
-        <template #default="scope">
-          <el-tag v-if="scope.row.changeType === 'IN'" type="success">入库</el-tag>
-          <el-tag v-else type="warning">出库</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="变更数量" align="center" prop="changeQuantity" />
-      <el-table-column label="变更前" align="center" prop="beforeQuantity" />
-      <el-table-column label="变更后" align="center" prop="afterQuantity" />
-      <el-table-column label="操作人" align="center" prop="operatorName" />
-      <el-table-column label="创建时间" align="center" prop="createTime" width="160">
-        <template #default="scope">
-          <span>{{ parseTime(scope.row.createTime) }}</span>
-        </template>
-      </el-table-column>
-    </el-table>
+    <!-- 统计卡片 -->
+    <el-row :gutter="16" class="stats-cards">
+      <el-col :span="6">
+        <el-statistic title="总入库" :value="stats.totalIn" suffix="件" />
+      </el-col>
+      <el-col :span="6">
+        <el-statistic title="总出库" :value="stats.totalOut" suffix="件" />
+      </el-col>
+      <el-col :span="6">
+        <el-statistic title="净变化" :value="stats.netChange"
+          :value-style="{color: stats.netChange >= 0 ? '#10b981' : '#ef4444'}" />
+      </el-col>
+      <el-col :span="6">
+        <el-statistic title="事件总数" :value="stats.eventCount" suffix="次" />
+      </el-col>
+    </el-row>
 
-    <pagination v-show="total>0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
+    <!-- 维度选择器 -->
+    <DimensionSelector v-model="dimension" />
+
+    <!-- 内容区域 -->
+    <div class="content-area" v-loading="loading">
+      <ProductDimensionView v-if="dimension === 'product'"
+        :groupedData="productGroups"
+        :timeUnit="timeUnit"
+        @eventClick="showEventDetail" />
+
+      <WarehouseDimensionView v-else-if="dimension === 'warehouse'"
+        :groupedData="warehouseGroups"
+        :timeUnit="timeUnit"
+        @eventClick="showEventDetail" />
+    </div>
+
+    <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
   </div>
 </template>
 
 <script setup name="WmsInventoryLog">
-import { listInventoryLog } from "@/api/wms/inventoryLog";
-import { listProduct } from "@/api/product/product";
+import { computed, getCurrentInstance, reactive, ref, toRefs } from 'vue'
+import { listInventoryLog } from '@/api/wms/inventoryLog'
+import { listProduct } from '@/api/product/product'
+import { listWarehouse } from '@/api/wms/warehouse'
+import { groupByProduct, groupByWarehouse, calculateStats } from '@/utils/inventoryAnalysis'
+import DimensionSelector from '@/components/wms/DimensionSelector.vue'
+import ProductDimensionView from '@/components/wms/ProductDimensionView.vue'
+import WarehouseDimensionView from '@/components/wms/WarehouseDimensionView.vue'
 
-const { proxy } = getCurrentInstance();
+const { proxy } = getCurrentInstance()
 
-const logList = ref([]);
-const productOptions = ref([]);
-const loading = ref(true);
-const showSearch = ref(true);
-const total = ref(0);
-const dateRange = ref([]);
+const logList = ref([])
+const productOptions = ref([])
+const warehouseOptions = ref([])
+const loading = ref(false)
+const total = ref(0)
+const dateRange = ref([])
+const timeUnit = ref('hour')
+const dimension = ref('product')
 
 const data = reactive({
   queryParams: {
     pageNum: 1,
-    pageSize: 10,
+    pageSize: 100,
     productId: undefined,
+    warehouseId: undefined,
     changeType: undefined
   }
-});
+})
 
-const { queryParams } = toRefs(data);
+const { queryParams } = toRefs(data)
+
+const stats = computed(() => calculateStats(logList.value))
+const productGroups = computed(() => groupByProduct(logList.value))
+const warehouseGroups = computed(() => groupByWarehouse(logList.value))
 
 function getList() {
-  loading.value = true;
-  const params = { ...queryParams.value };
-  if (dateRange.value && dateRange.value.length === 2) {
-    params.beginTime = dateRange.value[0];
-    params.endTime = dateRange.value[1];
+  loading.value = true
+  const params = { ...queryParams.value }
+  if (dateRange.value?.length === 2) {
+    params.beginTime = dateRange.value[0]
+    params.endTime = dateRange.value[1]
   }
   listInventoryLog(params).then(response => {
-    logList.value = response.rows;
-    total.value = response.total;
-    loading.value = false;
-  });
+    logList.value = response.rows || []
+    total.value = response.total || 0
+  }).finally(() => loading.value = false)
 }
 
 function getProductOptions() {
   listProduct().then(response => {
-    productOptions.value = response.rows;
-  });
+    productOptions.value = response.rows || []
+  })
+}
+
+function getWarehouseOptions() {
+  listWarehouse().then(response => {
+    warehouseOptions.value = response.rows || []
+  })
 }
 
 function handleQuery() {
-  queryParams.value.pageNum = 1;
-  getList();
+  queryParams.value.pageNum = 1
+  getList()
 }
 
-function resetQuery() {
-  dateRange.value = [];
-  proxy.resetForm("queryRef");
-  handleQuery();
+function showEventDetail(event) {
+  proxy.$modal.msgSuccess(`${event.productName} - ${event.warehouseName}: ${event.changeType === 'IN' ? '+' : '-'}${event.changeQuantity}`)
 }
 
-getList();
-getProductOptions();
+getList()
+getProductOptions()
+getWarehouseOptions()
 </script>
+
+<style lang="scss" scoped>
+.inventory-analysis {
+  padding: 20px;
+  background: #f5f7fa;
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+
+  h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+  }
+
+  .controls {
+    display: flex;
+    gap: 12px;
+  }
+}
+
+.stats-cards {
+  margin-bottom: 20px;
+}
+
+.content-area {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  min-height: 400px;
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .controls {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+}
+</style>

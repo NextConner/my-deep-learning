@@ -1,79 +1,98 @@
 <template>
-  <div class="app-container modern-page">
-    <div class="search-card">
-    <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
-      <el-form-item label="仓库" prop="warehouseId">
-        <el-select v-model="queryParams.warehouseId" placeholder="请选择仓库" clearable>
-          <el-option v-for="item in warehouseOptions" :key="item.warehouseId" :label="item.warehouseName" :value="item.warehouseId" />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-        <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-      </el-form-item>
-    </el-form>
+  <div class="location-container">
+    <div class="page-header">
+      <div>
+        <h2 class="page-title">库位管理</h2>
+        <p class="page-desc">管理仓库、库区、库位与货架的层级结构</p>
+      </div>
+      <el-button type="primary" icon="Plus" size="large" @click="handleAdd">新增节点</el-button>
     </div>
 
-    <div class="action-bar">
-    <el-row :gutter="10">
-      <el-col :span="1.5">
-        <el-button type="primary" plain icon="Plus" @click="handleAdd">新增</el-button>
-      </el-col>
-      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
-    </el-row>
-    </div>
-
-    <div class="table-card">
-    <el-table v-loading="loading" :data="locationList" row-key="id" :tree-props="{children: 'children'}">
-      <el-table-column label="名称" prop="name" width="200" />
-      <el-table-column label="编码" prop="code" />
-      <el-table-column label="类型" prop="type">
-        <template #default="scope">
-          <el-tag v-if="scope.row.type === 'warehouse'">仓库</el-tag>
-          <el-tag v-else-if="scope.row.type === 'area'" type="success">库区</el-tag>
-          <el-tag v-else-if="scope.row.type === 'location'" type="warning">库位</el-tag>
-          <el-tag v-else type="info">货架</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="状态" prop="status">
-        <template #default="scope">
-          <dict-tag :options="sys_normal_disable" :value="scope.row.status"/>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" align="center" width="200">
-        <template #default="scope">
-          <el-button link type="primary" icon="Plus" @click="handleAdd(scope.row)">新增</el-button>
-          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)">修改</el-button>
-          <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-    </div>
-
-    <el-dialog :title="title" v-model="open" width="600px" class="modern-dialog">
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
-        <el-form-item label="类型" prop="type">
-          <el-radio-group v-model="form.type" :disabled="form.parentId">
-            <el-radio label="area" v-if="!form.parentId || form.parentType === 'warehouse'">库区</el-radio>
-            <el-radio label="location" v-if="!form.parentId || form.parentType === 'area'">库位</el-radio>
-            <el-radio label="shelf" v-if="!form.parentId || form.parentType === 'location'">货架</el-radio>
-          </el-radio-group>
+    <el-card shadow="never" class="search-card">
+      <el-form :model="queryParams" ref="queryRef" :inline="true">
+        <el-form-item label="仓库" prop="warehouseId">
+          <el-select v-model="queryParams.warehouseId" placeholder="请选择仓库" clearable>
+            <el-option v-for="item in warehouseOptions" :key="item.warehouseId" :label="item.warehouseName" :value="item.warehouseId" />
+          </el-select>
         </el-form-item>
-        <el-form-item label="名称" prop="name">
-          <el-input v-model="form.name" placeholder="请输入名称" />
-        </el-form-item>
-        <el-form-item label="编码" prop="code">
-          <el-input v-model="form.code" placeholder="请输入编码" />
-        </el-form-item>
-        <el-form-item label="状态">
-          <el-radio-group v-model="form.status">
-            <el-radio v-for="dict in sys_normal_disable" :key="dict.value" :label="dict.value">{{ dict.label }}</el-radio>
-          </el-radio-group>
+        <el-form-item>
+          <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
+          <el-button icon="Refresh" @click="resetQuery">重置</el-button>
         </el-form-item>
       </el-form>
+    </el-card>
+
+    <el-card shadow="never" class="table-card" v-loading="loading">
+      <div class="location-overview">
+        <div class="overview-item">
+          <span class="overview-label">仓库</span>
+          <strong class="overview-value">{{ summaryCards[0].value }}</strong>
+        </div>
+        <div class="overview-item">
+          <span class="overview-label">库区</span>
+          <strong class="overview-value">{{ summaryCards[1].value }}</strong>
+        </div>
+        <div class="overview-item">
+          <span class="overview-label">库位</span>
+          <strong class="overview-value">{{ summaryCards[2].value }}</strong>
+        </div>
+        <div class="overview-item">
+          <span class="overview-label">货架</span>
+          <strong class="overview-value">{{ summaryCards[3].value }}</strong>
+        </div>
+      </div>
+
+      <LocationBranch
+        v-if="!loading && locationList.length"
+        :nodes="locationList"
+        @add="handleAdd"
+        @edit="handleUpdate"
+        @delete="handleDelete"
+      />
+      <el-empty v-else-if="!loading" description="暂无库位数据" />
+    </el-card>
+
+    <el-dialog :title="title" v-model="open" width="600px" append-to-body class="modern-dialog">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
+        <el-row>
+          <el-col :span="24" v-if="form.parentName">
+            <el-form-item label="父级节点">
+              <el-input v-model="form.parentName" disabled />
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <el-form-item label="类型" prop="type">
+              <el-radio-group v-model="form.type" :disabled="!!form.parentId">
+                <el-radio label="area" v-if="!form.parentId || form.parentType === 'warehouse'">库区</el-radio>
+                <el-radio label="location" v-if="!form.parentId || form.parentType === 'area'">库位</el-radio>
+                <el-radio label="shelf" v-if="!form.parentId || form.parentType === 'location'">货架</el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <el-form-item label="名称" prop="name">
+              <el-input v-model="form.name" placeholder="请输入名称" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <el-form-item label="编码" prop="code">
+              <el-input v-model="form.code" placeholder="请输入编码" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="24">
+            <el-form-item label="状态">
+              <el-radio-group v-model="form.status">
+                <el-radio v-for="dict in sys_normal_disable" :key="dict.value" :label="dict.value">{{ dict.label }}</el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </el-form>
       <template #footer>
-        <el-button type="primary" @click="submitForm">确 定</el-button>
-        <el-button @click="cancel">取 消</el-button>
+        <div class="dialog-footer">
+          <el-button type="primary" @click="submitForm">确 定</el-button>
+          <el-button @click="cancel">取 消</el-button>
+        </div>
       </template>
     </el-dialog>
   </div>
@@ -84,6 +103,7 @@ import { listWarehouse } from "@/api/wms/warehouse";
 import { listArea, addArea, updateArea, delArea } from "@/api/wms/area";
 import { listLocation, addLocation, updateLocation, delLocation } from "@/api/wms/location";
 import { listShelf, addShelf, updateShelf, delShelf } from "@/api/wms/shelf";
+import LocationBranch from "./LocationBranch.vue";
 
 const { proxy } = getCurrentInstance();
 const { sys_normal_disable } = proxy.useDict("sys_normal_disable");
@@ -92,8 +112,33 @@ const locationList = ref([]);
 const warehouseOptions = ref([]);
 const open = ref(false);
 const loading = ref(true);
-const showSearch = ref(true);
 const title = ref("");
+
+const summaryCards = computed(() => {
+  let warehouseCount = 0
+  let areaCount = 0
+  let locationCount = 0
+  let shelfCount = 0
+
+  const walk = (nodes) => {
+    nodes.forEach(node => {
+      if (node.type === 'warehouse') warehouseCount += 1
+      if (node.type === 'area') areaCount += 1
+      if (node.type === 'location') locationCount += 1
+      if (node.type === 'shelf') shelfCount += 1
+      if (node.children?.length) walk(node.children)
+    })
+  }
+
+  walk(locationList.value)
+
+  return [
+    { key: 'warehouse', label: '仓库', value: warehouseCount },
+    { key: 'area', label: '库区', value: areaCount },
+    { key: 'location', label: '库位', value: locationCount },
+    { key: 'shelf', label: '货架', value: shelfCount }
+  ]
+})
 
 const data = reactive({
   form: {},
@@ -124,10 +169,12 @@ function getList() {
 function buildTree(warehouses, areas, locations, shelves) {
   const tree = warehouses.map(w => ({
     id: 'w-' + w.warehouseId,
+    level: 0,
     name: w.warehouseName,
     code: w.warehouseCode,
     type: 'warehouse',
     status: w.status,
+    parentType: undefined,
     warehouseId: w.warehouseId,
     children: []
   }));
@@ -137,10 +184,13 @@ function buildTree(warehouses, areas, locations, shelves) {
     if (warehouse) {
       warehouse.children.push({
         id: 'a-' + a.areaId,
+        level: 1,
         name: a.areaName,
         code: a.areaCode,
         type: 'area',
         status: a.status,
+        parentType: 'warehouse',
+        parentName: warehouse.name,
         areaId: a.areaId,
         warehouseId: a.warehouseId,
         children: []
@@ -154,10 +204,13 @@ function buildTree(warehouses, areas, locations, shelves) {
       if (area) {
         area.children.push({
           id: 'l-' + l.locationId,
+          level: 2,
           name: l.locationCode,
           code: l.locationCode,
           type: 'location',
           status: l.status,
+          parentType: 'area',
+          parentName: area.name,
           locationId: l.locationId,
           areaId: l.areaId,
           children: []
@@ -173,10 +226,13 @@ function buildTree(warehouses, areas, locations, shelves) {
         if (location) {
           location.children.push({
             id: 's-' + s.shelfId,
+            level: 3,
             name: s.shelfCode,
             code: s.shelfCode,
             type: 'shelf',
             status: s.status,
+            parentType: 'location',
+            parentName: location.name,
             shelfId: s.shelfId,
             locationId: s.locationId
           });
@@ -212,6 +268,7 @@ function handleAdd(row) {
   if (row) {
     form.value.parentId = row.id;
     form.value.parentType = row.type;
+    form.value.parentName = row.name;
     if (row.type === 'warehouse') {
       form.value.type = 'area';
       form.value.warehouseId = row.warehouseId;
@@ -224,14 +281,14 @@ function handleAdd(row) {
     }
   }
   open.value = true;
-  title.value = "新增";
+  title.value = "新增库位节点";
 }
 
 function handleUpdate(row) {
   reset();
   form.value = { ...row };
   open.value = true;
-  title.value = "修改";
+  title.value = "修改库位节点";
 }
 
 function submitForm() {
@@ -256,7 +313,7 @@ function submitForm() {
 }
 
 function handleDelete(row) {
-  proxy.$modal.confirm('是否确认删除?').then(() => {
+  proxy.$modal.confirm('是否确认删除名称为"' + row.name + '"的数据项?').then(() => {
     let promise;
     if (row.type === 'area') promise = delArea(row.areaId);
     else if (row.type === 'location') promise = delLocation(row.locationId);
@@ -271,7 +328,72 @@ function handleDelete(row) {
 getList();
 </script>
 
-<style lang="scss" scoped>
-@import "@/assets/styles/modern-page.scss";
-</style>
+<style scoped lang="scss">
+.location-container {
+  padding: 20px;
+  background: #f5f7fa;
+  min-height: calc(100vh - 84px);
+}
 
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+
+.page-title {
+  margin: 0 0 6px;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.page-desc {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.search-card,
+.table-card {
+  margin-bottom: 16px;
+  border-radius: 12px;
+  border: 0;
+}
+
+.location-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.overview-item {
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f8fafc 0%, #eef5ff 100%);
+  border: 1px solid #e2e8f0;
+}
+
+.overview-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.overview-value {
+  font-size: 28px;
+  line-height: 1;
+  color: #0f172a;
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+</style>

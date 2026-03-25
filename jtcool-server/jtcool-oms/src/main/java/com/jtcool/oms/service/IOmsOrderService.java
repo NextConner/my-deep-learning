@@ -10,4 +10,12 @@ public interface IOmsOrderService {
     int updateOmsOrder(OmsOrder omsOrder);
     int deleteOmsOrderByIds(Long[] orderIds);
     int updateOrderStatus(Long orderId, String status);
+
+    // 订单工作流方法
+    void confirmBySales(Long orderId, String operator);
+    void reviewOrder(Long orderId, String operator);
+    void confirmByWarehouse(Long orderId, String operator);
+    void registerOutbound(Long orderId, String operator);
+    void confirmShipment(Long orderId, String operator, String trackingNumber);
+    void confirmReceipt(Long orderId, String operator);
 }

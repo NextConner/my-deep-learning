@@ -18,8 +18,8 @@
           <el-tag v-else>{{ orderData.orderStatus }}</el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="销售人员">{{ orderData.salesUserName }}</el-descriptions-item>
-        <el-descriptions-item label="订单日期">{{ parseTime(orderData.orderDate, '{y}-{m}-{d}') }}</el-descriptions-item>
-        <el-descriptions-item label="交货日期">{{ parseTime(orderData.deliveryDate, '{y}-{m}-{d}') }}</el-descriptions-item>
+        <el-descriptions-item label="订单日期">{{ parseTime(orderData.orderDate, '{y}-{m}-{d} {h}:{i}:{s}') }}</el-descriptions-item>
+        <el-descriptions-item label="交货日期">{{ parseTime(orderData.deliveryDate, '{y}-{m}-{d} {h}:{i}:{s}') }}</el-descriptions-item>
         <el-descriptions-item label="订单总额">¥{{ orderData.totalAmount }}</el-descriptions-item>
         <el-descriptions-item label="优惠金额">¥{{ orderData.discountAmount }}</el-descriptions-item>
         <el-descriptions-item label="实付金额">¥{{ orderData.finalAmount }}</el-descriptions-item>

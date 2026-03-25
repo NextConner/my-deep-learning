@@ -5,7 +5,9 @@
     <resultMap id="WmsInventoryLogResult" type="com.jtcool.wms.domain.WmsInventoryLog">
         <id property="logId" column="log_id"/>
         <result property="productId" column="product_id"/>
+        <result property="productName" column="product_name"/>
         <result property="warehouseId" column="warehouse_id"/>
+        <result property="warehouseName" column="warehouse_name"/>
         <result property="areaId" column="area_id"/>
         <result property="locationId" column="location_id"/>
         <result property="shelfId" column="shelf_id"/>
@@ -17,21 +19,28 @@
         <result property="beforeQuantity" column="before_quantity"/>
         <result property="afterQuantity" column="after_quantity"/>
         <result property="operatorId" column="operator_id"/>
+        <result property="operatorName" column="operator_name"/>
         <result property="createTime" column="create_time"/>
         <result property="remark" column="remark"/>
     </resultMap>
 
     <select id="selectWmsInventoryLogList" resultMap="WmsInventoryLogResult">
-        select log_id, product_id, warehouse_id, area_id, location_id, shelf_id,
-               bill_id, bill_no, bill_type, change_type, change_quantity,
-               before_quantity, after_quantity, operator_id, create_time, remark
-        from wms_inventory_log
+        select l.log_id, l.product_id, p.product_name, l.warehouse_id, w.warehouse_name,
+               l.area_id, l.location_id, l.shelf_id, l.bill_id, l.bill_no, l.bill_type, l.change_type,
+               l.change_quantity, l.before_quantity, l.after_quantity, l.operator_id, u.user_name as operator_name,
+               l.create_time, l.remark
+        from wms_inventory_log l
+        left join prd_product p on p.product_id = l.product_id
+        left join wms_warehouse w on w.warehouse_id = l.warehouse_id
+        left join sys_user u on u.user_id = l.operator_id
         <where>
-            <if test="productId != null">and product_id = #{productId}</if>
-            <if test="billId != null">and bill_id = #{billId}</if>
-            <if test="changeType != null and changeType != ''">and change_type = #{changeType}</if>
+            <if test="productId != null">and l.product_id = #{productId}</if>
+            <if test="billId != null">and l.bill_id = #{billId}</if>
+            <if test="changeType != null and changeType != ''">and l.change_type = #{changeType}</if>
+            <if test="beginTime != null">and l.create_time <![CDATA[>=]]> #{beginTime}</if>
+            <if test="endTime != null">and l.create_time <![CDATA[<=]]> #{endTime}</if>
         </where>
-        order by create_time desc
+        order by l.create_time desc
     </select>
 
     <insert id="insertWmsInventoryLog" useGeneratedKeys="true" keyProperty="logId">

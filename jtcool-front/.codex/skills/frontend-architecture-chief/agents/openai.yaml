@@ -1,0 +1,7 @@
+interface:
+  display_name: "Frontend Architecture Chief"
+  short_description: "Senior frontend architect for stack and system decisions."
+  default_prompt: "Use $frontend-architecture-chief to compare frontend architecture options, recommend a pragmatic solution, and outline risks and implementation details."
+
+policy:
+  allow_implicit_invocation: true

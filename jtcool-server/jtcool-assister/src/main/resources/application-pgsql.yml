@@ -1,0 +1,72 @@
+server:
+  port: ${SERVER_PORT:8081}
+
+spring:
+  application:
+    name: learn-from-claude
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:192.168.20.129}:${DB_PORT:5432}/${DB_NAME:ragdb}
+    username: ${SPRING_DATASOURCE_USERNAME:pgsql}
+    password: ${SPRING_DATASOURCE_PASSWORD:123456}
+  jpa:
+    hibernate:
+      ddl-auto: none
+  security:
+    strategy: MODE_INHERITABLETHREADLOCAL
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+
+security:
+  mode: ${SECURITY_MODE:local-jwt}
+  identity:
+    issuer: ${SECURITY_IDENTITY_ISSUER:}
+    audience: ${SECURITY_IDENTITY_AUDIENCE:}
+    username-claim: ${SECURITY_USERNAME_CLAIM:preferred_username}
+    user-id-claim: ${SECURITY_USER_ID_CLAIM:sub}
+    dept-id-claim: ${SECURITY_DEPT_ID_CLAIM:dept_id}
+    roles-claim: ${SECURITY_ROLES_CLAIM:roles}
+    data-scopes-claim: ${SECURITY_DATA_SCOPES_CLAIM:data_scopes}
+    jwt-secret: ${SECURITY_ENTERPRISE_JWT_SECRET:change-enterprise-secret-in-production}
+  gateway:
+    input-enabled: ${SECURITY_GATEWAY_INPUT_ENABLED:true}
+    output-enabled: ${SECURITY_GATEWAY_OUTPUT_ENABLED:true}
+    max-input-length: ${SECURITY_GATEWAY_MAX_INPUT_LENGTH:4000}
+    blocked-patterns:
+      - "ignore previous instructions"
+      - "reveal system prompt"
+      - "print system prompt"
+      - "bypass security"
+    sensitive-patterns:
+      - "\\b1[3-9]\\d{9}\\b"
+      - "\\b[1-9]\\d{5}(18|19|20)\\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\\d|3[01])\\d{3}[0-9Xx]\\b"
+      - "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"
+
+jwt:
+  secret: ${JWT_SECRET:change-me-in-production}
+  jtcool-secret: ${JTCOOL_TOKEN_SECRET:abcdefghijklmnopqrstuvwxyz}
+  expiration: 86400000
+
+rag:
+  chunk:
+    max-segment-size: 300
+    max-overlap-size: 30
+
+agent:
+  runtime:
+    max-steps: 3
+    step-timeout-ms: 15000
+    retry-times: 1
+  database:
+    query-timeout: 5000
+    max-rows: 100
+    allowed-schemas: [public]
+
+langchain4j:
+  ollama:
+    chat-model:
+      base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+      model-name: ${OLLAMA_CHAT_MODEL:llama3.2:3b}
+      temperature: ${OLLAMA_TEMPERATURE:0.0}
+      timeout: ${OLLAMA_TIMEOUT:PT10S}

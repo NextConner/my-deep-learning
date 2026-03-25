@@ -6,6 +6,15 @@
         <template #header>基本信息</template>
         <el-row :gutter="20">
           <el-col :span="12">
+            <el-form-item label="订单号" prop="orderNo">
+              <el-input v-model="form.orderNo" placeholder="系统自动生成，可手动调整">
+                <template #append>
+                  <el-button @click="form.orderNo = generateOrderNo()">重生成</el-button>
+                </template>
+              </el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
             <el-form-item label="客户" prop="customerId">
               <el-select v-model="form.customerId" placeholder="选择客户" filterable style="width: 100%">
                 <el-option v-for="item in customerOptions" :key="item.customerId" :label="item.customerName" :value="item.customerId" />
@@ -102,6 +111,7 @@ const customerOptions = ref([]);
 const productOptions = ref([]);
 
 const form = ref({
+  orderNo: '',
   customerId: undefined,
   orderDate: new Date(),
   deliveryDate: undefined,
@@ -113,10 +123,20 @@ const form = ref({
 });
 
 const rules = {
+  orderNo: [{ required: true, message: "订单号不能为空", trigger: "blur" }],
   customerId: [{ required: true, message: "请选择客户", trigger: "change" }],
   orderDate: [{ required: true, message: "请选择订单日期", trigger: "change" }],
   deliveryDate: [{ required: true, message: "请选择交货日期", trigger: "change" }]
 };
+
+function generateOrderNo() {
+  const now = new Date();
+  const pad = value => String(value).padStart(2, '0');
+  const datePart = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
+  const timePart = `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  const randomPart = String(Math.floor(Math.random() * 1000)).padStart(3, '0');
+  return `SO${datePart}${timePart}${randomPart}`;
+}
 
 function handleAddItem() {
   form.value.orderItems.push({
@@ -163,6 +183,9 @@ function calculateTotal() {
 watch(() => form.value.discountAmount, calculateTotal);
 
 function submitForm() {
+  if (!form.value.orderNo) {
+    form.value.orderNo = generateOrderNo();
+  }
   formRef.value.validate(valid => {
     if (valid) {
       if (form.value.orderItems.length === 0) {
@@ -188,4 +211,6 @@ listCustomer({}).then(response => {
 listProduct({}).then(response => {
   productOptions.value = response.rows;
 });
+
+form.value.orderNo = generateOrderNo();
 </script>

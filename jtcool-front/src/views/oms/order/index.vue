@@ -1,20 +1,18 @@
 <template>
-  <div class="orders-container">
-    <!-- Header Section -->
-    <div class="page-header">
-      <div class="header-content">
-        <h1 class="page-title">订单管理</h1>
-        <p class="page-subtitle">Order Management System</p>
+  <div class="orders-page">
+    <section class="hero-panel">
+      <div class="hero-copy">
+        <p class="hero-kicker">OMS / 订单列表</p>
+        <h2 class="hero-title">订单管理</h2>
+        <p class="hero-desc">按订单号、客户与状态快速筛选，直接在列表中处理详情、编辑和删除操作。</p>
       </div>
-      <el-button type="primary" class="create-btn" @click="handleAdd">
-        <span class="btn-icon">+</span>
-        创建订单
-      </el-button>
-    </div>
+      <div class="hero-actions">
+        <el-button type="primary" class="create-btn" @click="handleAdd">创建订单</el-button>
+      </div>
+    </section>
 
-    <!-- Search Filters -->
-    <div class="search-section" v-show="showSearch">
-      <el-form :model="queryParams" ref="queryRef" class="search-form">
+    <section class="filter-panel" v-show="showSearch">
+      <el-form :model="queryParams" ref="queryRef" class="filter-form">
         <div class="filter-grid">
           <el-form-item label="订单号" prop="orderNo">
             <el-input v-model="queryParams.orderNo" placeholder="搜索订单号" clearable @keyup.enter="handleQuery" />
@@ -36,61 +34,111 @@
               <el-option label="已拒绝" value="REJECTED" />
             </el-select>
           </el-form-item>
-          <div class="search-actions">
+          <div class="filter-actions">
             <el-button type="primary" @click="handleQuery">搜索</el-button>
             <el-button @click="resetQuery">重置</el-button>
           </div>
         </div>
       </el-form>
-    </div>
+    </section>
 
-    <!-- Orders Grid -->
-    <div class="orders-grid" v-loading="loading">
-      <div class="order-card" v-for="order in orderList" :key="order.orderId" @click="handleDetail(order)">
-        <div class="card-header">
-          <div class="order-number">{{ order.orderNo }}</div>
-          <div class="order-status" :class="`status-${order.orderStatus}`">
-            {{ getStatusText(order.orderStatus) }}
-          </div>
+    <section class="summary-strip">
+      <div class="summary-item">
+        <span class="summary-label">当前页订单</span>
+        <strong class="summary-value">{{ orderList.length }}</strong>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">待推进</span>
+        <strong class="summary-value accent">{{ pendingCount }}</strong>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">已完成</span>
+        <strong class="summary-value success">{{ completedCount }}</strong>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">当前页实付</span>
+        <strong class="summary-value amount">¥{{ currentPageAmount }}</strong>
+      </div>
+    </section>
+
+    <section class="list-panel" v-loading="loading">
+      <div class="list-toolbar">
+        <div class="toolbar-copy">
+          <h3>订单列表</h3>
+          <p>列表视图优先展示关键字段，减少跳转和卡片占位。</p>
         </div>
-
-        <div class="card-body">
-          <div class="customer-info">
-            <div class="customer-name">{{ order.customerName }}</div>
-            <div class="order-date">{{ formatDate(order.createTime) }}</div>
-          </div>
-
-          <div class="amount-section">
-            <div class="amount-label">实付金额</div>
-            <div class="amount-value">¥{{ Number(order.finalAmount).toFixed(2) }}</div>
-          </div>
-        </div>
-
-        <div class="card-footer">
-          <el-button link type="primary" @click.stop="handleDetail(order)">查看详情</el-button>
-          <el-button link type="primary" @click.stop="handleUpdate(order)" v-if="order.orderStatus === 'CREATED'">编辑</el-button>
-          <el-button link type="danger" @click.stop="handleDelete(order)" v-if="order.orderStatus === 'CREATED'">删除</el-button>
+        <div class="toolbar-meta">
+          <span class="meta-chip">共 {{ total }} 条</span>
         </div>
       </div>
-    </div>
 
-    <pagination v-show="total>0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
+      <el-table :data="orderList" class="orders-table" row-key="orderId" @row-click="handleDetail">
+        <el-table-column label="订单信息" min-width="280">
+          <template #default="scope">
+            <div class="primary-cell">
+              <button class="order-link" @click.stop="handleDetail(scope.row)">{{ scope.row.orderNo }}</button>
+              <div class="sub-line">
+                <span>{{ scope.row.customerName || '未关联客户' }}</span>
+                <span>{{ formatDate(scope.row.createTime) }}</span>
+              </div>
+            </div>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="状态" width="150" align="center">
+          <template #default="scope">
+            <span class="status-pill" :class="`status-${scope.row.orderStatus}`">{{ getStatusText(scope.row.orderStatus) }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="订单金额" min-width="160" align="right">
+          <template #default="scope">
+            <div class="amount-cell">
+              <span class="amount-main">¥{{ formatAmount(scope.row.totalAmount) }}</span>
+              <span class="amount-sub">原始金额</span>
+            </div>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="实付金额" min-width="180" align="right">
+          <template #default="scope">
+            <div class="amount-cell emphasize">
+              <span class="amount-main">¥{{ formatAmount(scope.row.finalAmount) }}</span>
+              <span class="amount-sub">最终成交</span>
+            </div>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="操作" width="220" align="center" fixed="right">
+          <template #default="scope">
+            <div class="action-row">
+              <el-button link type="primary" @click.stop="handleDetail(scope.row)">详情</el-button>
+              <el-button link type="primary" @click.stop="handleUpdate(scope.row)" v-if="scope.row.orderStatus === 'CREATED'">编辑</el-button>
+              <el-button link type="danger" @click.stop="handleDelete(scope.row)" v-if="scope.row.orderStatus === 'CREATED'">删除</el-button>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
+    </section>
   </div>
 </template>
 
 <script setup name="OmsOrder">
-import { listOrder, getOrder, delOrder, addOrder, updateOrder } from "@/api/oms/order";
-import { listCustomer } from "@/api/oms/customer";
-import { useRouter } from "vue-router";
+import { computed, getCurrentInstance, reactive, ref, toRefs } from 'vue'
+import { delOrder, listOrder } from '@/api/oms/order'
+import { listCustomer } from '@/api/oms/customer'
+import { useRouter } from 'vue-router'
 
-const { proxy } = getCurrentInstance();
-const router = useRouter();
+const { proxy } = getCurrentInstance()
+const router = useRouter()
 
-const orderList = ref([]);
-const customerOptions = ref([]);
-const loading = ref(true);
-const showSearch = ref(true);
-const total = ref(0);
+const orderList = ref([])
+const customerOptions = ref([])
+const loading = ref(true)
+const showSearch = ref(true)
+const total = ref(0)
 
 const data = reactive({
   queryParams: {
@@ -100,280 +148,422 @@ const data = reactive({
     customerId: undefined,
     orderStatus: undefined
   }
-});
+})
 
-const { queryParams } = toRefs(data);
+const { queryParams } = toRefs(data)
+
+const pendingStatuses = ['CREATED', 'SALES_CONFIRMED', 'AUDITED', 'WAREHOUSE_CONFIRMED', 'OUT_REGISTERED', 'SHIPPED']
+
+const pendingCount = computed(() => orderList.value.filter(item => pendingStatuses.includes(item.orderStatus)).length)
+const completedCount = computed(() => orderList.value.filter(item => item.orderStatus === 'RECEIVED').length)
+const currentPageAmount = computed(() => orderList.value.reduce((sum, item) => sum + Number(item.finalAmount || 0), 0).toFixed(2))
 
 function getList() {
-  loading.value = true;
+  loading.value = true
   listOrder(queryParams.value).then(response => {
-    orderList.value = response.rows;
-    total.value = response.total;
-    loading.value = false;
-  });
+    orderList.value = response.rows || []
+    total.value = response.total || 0
+  }).finally(() => {
+    loading.value = false
+  })
 }
 
 function getStatusText(status) {
   const statusMap = {
-    'CREATED': '已下单',
-    'SALES_CONFIRMED': '销售确认',
-    'AUDITED': '订单审核',
-    'WAREHOUSE_CONFIRMED': '仓库确认',
-    'OUT_REGISTERED': '登记出库',
-    'SHIPPED': '确认发货',
-    'RECEIVED': '客户签收',
-    'REJECTED': '已拒绝'
-  };
-  return statusMap[status] || status;
+    CREATED: '已下单',
+    SALES_CONFIRMED: '销售确认',
+    AUDITED: '订单审核',
+    WAREHOUSE_CONFIRMED: '仓库确认',
+    OUT_REGISTERED: '登记出库',
+    SHIPPED: '确认发货',
+    RECEIVED: '客户签收',
+    REJECTED: '已拒绝'
+  }
+  return statusMap[status] || status
 }
 
 function formatDate(dateStr) {
-  if (!dateStr) return '';
-  const date = new Date(dateStr);
-  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
+  if (!dateStr) return '--'
+  return proxy.parseTime(dateStr, '{y}-{m}-{d} {h}:{i}')
+}
+
+function formatAmount(value) {
+  return Number(value || 0).toFixed(2)
 }
 
 function handleQuery() {
-  queryParams.value.pageNum = 1;
-  getList();
+  queryParams.value.pageNum = 1
+  getList()
 }
 
 function resetQuery() {
-  proxy.resetForm("queryRef");
-  handleQuery();
+  proxy.resetForm('queryRef')
+  handleQuery()
 }
 
 function handleAdd() {
-  router.push('/oms/order/create');
+  router.push('/oms/order/create')
 }
 
 function handleDetail(row) {
-  router.push(`/oms/order/detail/${row.orderId}`);
+  router.push(`/oms/order/detail/${row.orderId}`)
 }
 
 function handleUpdate(row) {
-  router.push(`/oms/order/edit/${row.orderId}`);
+  router.push(`/oms/order/edit/${row.orderId}`)
 }
 
 function handleDelete(row) {
-  proxy.$modal.confirm('确认删除订单"' + row.orderNo + '"？').then(() => {
-    return delOrder(row.orderId);
+  proxy.$modal.confirm(`确认删除订单"${row.orderNo}"？`).then(() => {
+    return delOrder(row.orderId)
   }).then(() => {
-    getList();
-    proxy.$modal.msgSuccess("删除成功");
-  }).catch(() => {});
+    getList()
+    proxy.$modal.msgSuccess('删除成功')
+  }).catch(() => {})
 }
 
 listCustomer({}).then(response => {
-  customerOptions.value = response.rows;
-});
+  customerOptions.value = response.rows || []
+})
 
-getList();
+getList()
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600&display=swap');
-
-.orders-container {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
-  padding: 2rem;
+.orders-page {
+  min-height: calc(100vh - 84px);
+  padding: 20px;
+  background:
+    radial-gradient(circle at top left, rgba(64, 158, 255, 0.1), transparent 28%),
+    linear-gradient(180deg, #f4f7fb 0%, #eef3f8 100%);
 }
 
-.page-header {
+.hero-panel,
+.filter-panel,
+.summary-strip,
+.list-panel {
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(215, 224, 234, 0.9);
+  border-radius: 18px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.05);
+}
+
+.hero-panel {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 3rem;
-  animation: slideDown 0.6s ease-out;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px 28px;
+  margin-bottom: 16px;
 }
 
-.header-content {
-  flex: 1;
+.hero-kicker {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #409eff;
 }
 
-.page-title {
-  font-family: 'Playfair Display', serif;
-  font-size: 3.5rem;
-  font-weight: 900;
-  color: #1a1a2e;
+.hero-title {
+  margin: 0 0 8px;
+  font-size: 28px;
+  line-height: 1.1;
+  color: #172033;
+}
+
+.hero-desc {
   margin: 0;
-  letter-spacing: -0.02em;
-  line-height: 1;
-}
-
-.page-subtitle {
-  font-family: 'Inter', sans-serif;
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin-top: 0.5rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-size: 14px;
+  color: #5b6b82;
 }
 
 .create-btn {
-  height: 3.5rem;
-  padding: 0 2rem;
-  background: #1a1a2e;
+  min-width: 116px;
+  height: 42px;
   border: none;
-  border-radius: 0.5rem;
-  font-size: 1rem;
+  border-radius: 12px;
   font-weight: 600;
-  transition: all 0.3s ease;
+  box-shadow: 0 10px 18px rgba(64, 158, 255, 0.22);
 }
 
-.create-btn:hover {
-  background: #16213e;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(26, 26, 46, 0.3);
-}
-
-.btn-icon {
-  font-size: 1.5rem;
-  margin-right: 0.5rem;
-}
-
-.search-section {
-  background: white;
-  border-radius: 1rem;
-  padding: 2rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  animation: fadeIn 0.6s ease-out 0.1s both;
+.filter-panel {
+  padding: 18px 20px 2px;
+  margin-bottom: 16px;
 }
 
 .filter-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: 1.1fr 1fr 1fr auto;
+  gap: 16px;
   align-items: end;
 }
 
-.search-actions {
+.filter-actions {
   display: flex;
-  gap: 0.75rem;
+  gap: 10px;
+  padding-bottom: 18px;
 }
 
-.orders-grid {
+.summary-strip {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  overflow: hidden;
+  margin-bottom: 16px;
 }
 
-.order-card {
-  background: white;
-  border-radius: 1rem;
-  padding: 1.5rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: 2px solid transparent;
-  animation: fadeInUp 0.6s ease-out both;
+.summary-item {
+  padding: 18px 22px;
+  border-right: 1px solid #e8eef5;
 }
 
-.order-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
-  border-color: #1a1a2e;
+.summary-item:last-child {
+  border-right: none;
 }
 
-.card-header {
+.summary-label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: #7a8798;
+}
+
+.summary-value {
+  font-size: 24px;
+  line-height: 1;
+  color: #172033;
+}
+
+.summary-value.accent {
+  color: #409eff;
+}
+
+.summary-value.success {
+  color: #18a058;
+}
+
+.summary-value.amount {
+  color: #d9485f;
+}
+
+.list-panel {
+  padding: 18px 20px 10px;
+}
+
+.list-toolbar {
   display: flex;
+  align-items: flex-end;
   justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.toolbar-copy h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  color: #172033;
+}
+
+.toolbar-copy p {
+  margin: 0;
+  font-size: 13px;
+  color: #6b7788;
+}
+
+.meta-chip {
+  display: inline-flex;
   align-items: center;
-  margin-bottom: 1.25rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.order-number {
-  font-family: 'Inter', sans-serif;
-  font-size: 1.125rem;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #eef5ff;
+  color: #2f6cb3;
+  font-size: 12px;
   font-weight: 600;
-  color: #1a1a2e;
-  letter-spacing: -0.01em;
 }
 
-.order-status {
-  padding: 0.375rem 0.875rem;
-  border-radius: 2rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.status-CREATED { background: #e0e7ff; color: #4338ca; }
-.status-SALES_CONFIRMED { background: #dbeafe; color: #1e40af; }
-.status-AUDITED { background: #d1fae5; color: #065f46; }
-.status-WAREHOUSE_CONFIRMED { background: #fef3c7; color: #92400e; }
-.status-SHIPPED { background: #fed7aa; color: #9a3412; }
-.status-RECEIVED { background: #bbf7d0; color: #14532d; }
-.status-REJECTED { background: #fecaca; color: #991b1b; }
-
-.card-body {
-  margin-bottom: 1.25rem;
-}
-
-.customer-info {
-  margin-bottom: 1.5rem;
-}
-
-.customer-name {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 0.25rem;
-}
-
-.order-date {
-  font-size: 0.875rem;
-  color: #9ca3af;
-}
-
-.amount-section {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  padding: 1rem;
-  border-radius: 0.75rem;
-}
-
-.amount-label {
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 0.25rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.amount-value {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: white;
-}
-
-.card-footer {
+.primary-cell {
   display: flex;
-  gap: 0.75rem;
-  padding-top: 1rem;
-  border-top: 1px solid #f0f0f0;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 0;
 }
 
-@keyframes slideDown {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
+.order-link {
+  width: fit-content;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #1f5eff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.sub-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  font-size: 12px;
+  color: #7a8798;
 }
 
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 92px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.status-CREATED { background: #eef2ff; color: #4f46e5; }
+.status-SALES_CONFIRMED { background: #e0f2fe; color: #0369a1; }
+.status-AUDITED { background: #ecfdf3; color: #15803d; }
+.status-WAREHOUSE_CONFIRMED { background: #fff7e8; color: #b76e00; }
+.status-OUT_REGISTERED { background: #fff1f2; color: #be123c; }
+.status-SHIPPED { background: #fff3e8; color: #c2410c; }
+.status-RECEIVED { background: #ecfdf3; color: #047857; }
+.status-REJECTED { background: #fef2f2; color: #b91c1c; }
+
+.amount-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.amount-cell.emphasize .amount-main {
+  color: #d9485f;
+}
+
+.amount-main {
+  font-size: 16px;
+  font-weight: 700;
+  color: #172033;
+}
+
+.amount-sub {
+  font-size: 12px;
+  color: #8b97a8;
+}
+
+.action-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+:deep(.filter-form .el-form-item) {
+  margin-bottom: 16px;
+}
+
+:deep(.filter-form .el-form-item__label) {
+  color: #526174;
+  font-weight: 600;
+}
+
+:deep(.filter-form .el-input__wrapper),
+:deep(.filter-form .el-select__wrapper) {
+  min-height: 40px;
+  border-radius: 10px;
+}
+
+:deep(.orders-table) {
+  width: 100%;
+  border: 1px solid #e8eef5;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+:deep(.orders-table th.el-table__cell) {
+  height: 48px;
+  background: #f7f9fc !important;
+  color: #4a5768;
+  font-weight: 700;
+  border-bottom: 1px solid #e8eef5;
+}
+
+:deep(.orders-table td.el-table__cell) {
+  padding: 16px 0;
+  border-bottom: 1px solid #eef2f6;
+}
+
+:deep(.orders-table .el-table__row) {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+:deep(.orders-table .el-table__row:hover > td.el-table__cell) {
+  background: #f8fbff !important;
+}
+
+:deep(.pagination-container) {
+  margin-top: 18px;
+  padding-top: 8px;
+}
+
+@media (max-width: 1100px) {
+  .filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .summary-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .summary-item:nth-child(2) {
+    border-right: none;
+  }
+
+  .summary-item:nth-child(-n + 2) {
+    border-bottom: 1px solid #e8eef5;
+  }
+}
+
+@media (max-width: 768px) {
+  .orders-page {
+    padding: 14px;
+  }
+
+  .hero-panel {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 20px;
+  }
+
+  .hero-title {
+    font-size: 24px;
+  }
+
+  .filter-grid,
+  .summary-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-item {
+    border-right: none;
+    border-bottom: 1px solid #e8eef5;
+  }
+
+  .summary-item:last-child {
+    border-bottom: none;
+  }
+
+  .list-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .action-row {
+    gap: 6px;
+    flex-wrap: wrap;
+  }
 }
 </style>
-
-
-

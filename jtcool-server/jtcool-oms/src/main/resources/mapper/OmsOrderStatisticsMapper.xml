@@ -22,6 +22,8 @@
         <where>
             <if test="statType != null and statType != ''">and stat_type = #{statType}</if>
             <if test="statDate != null">and stat_date = #{statDate}</if>
+            <if test="beginTime != null">and stat_date <![CDATA[>=]]> #{beginTime}</if>
+            <if test="endTime != null">and stat_date <![CDATA[<=]]> #{endTime}</if>
             <if test="customerId != null">and customer_id = #{customerId}</if>
             <if test="salesUserId != null">and sales_user_id = #{salesUserId}</if>
         </where>

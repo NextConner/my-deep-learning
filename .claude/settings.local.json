@@ -42,7 +42,8 @@
       "Bash(find ../jtcool-front/src/api -name *assistant* -o -name *ai*)",
       "Bash(git reset:*)",
       "Bash(chmod:*)",
-      "Bash(\"D:\\\\github\\\\dev-deep-learning\\\\jtcool-server\\\\sql\\\\test_data.sql\":*)"
+      "Bash(\"D:\\\\github\\\\dev-deep-learning\\\\jtcool-server\\\\sql\\\\test_data.sql\":*)",
+      "Bash(git restore:*)"
     ]
   }
 }

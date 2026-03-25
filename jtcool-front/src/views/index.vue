@@ -51,7 +51,7 @@
           <div v-for="item in pendingOrdersPreview" :key="item.orderNo" class="mini-list__item">
             <div>
               <div class="mini-list__title">{{ item.orderNo }}</div>
-              <div class="mini-list__meta">{{ item.customerName }} | {{ item.createTime }}</div>
+              <div class="mini-list__meta">{{ item.customerName }} | {{ parseTime(item.createTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</div>
             </div>
             <div class="mini-list__side">
               <el-tag :type="item.priorityType" effect="light">{{ item.priority }}</el-tag>
@@ -164,7 +164,11 @@
             <el-tag :type="row.priorityType" effect="light">{{ row.priority }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="下单时间" prop="createTime" min-width="160" />
+        <el-table-column label="下单时间" min-width="180">
+          <template #default="{ row }">
+            {{ parseTime(row.createTime, '{y}-{m}-{d} {h}:{i}:{s}') }}
+          </template>
+        </el-table-column>
       </el-table>
     </el-dialog>
 
@@ -193,7 +197,11 @@
             <el-tag :type="row.statusType">{{ row.status }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="创建时间" prop="createTime" min-width="160" />
+        <el-table-column label="创建时间" min-width="180">
+          <template #default="{ row }">
+            {{ parseTime(row.createTime, '{y}-{m}-{d} {h}:{i}:{s}') }}
+          </template>
+        </el-table-column>
         <el-table-column label="负责人" prop="owner" min-width="100" />
       </el-table>
     </el-dialog>
@@ -203,6 +211,7 @@
 <script setup name="Index">
 import { reactive, ref, computed } from 'vue'
 import { Box, DocumentChecked, Histogram, ShoppingCart } from '@element-plus/icons-vue'
+import { parseTime } from '@/utils/jtcool'
 
 const dialogs = reactive({
   orders: false,

@@ -1,53 +1,66 @@
 <template>
-  <div class="app-container modern-page">
-    <div class="search-card">
-      <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
-      <el-form-item label="分类名称" prop="categoryName">
-        <el-input v-model="queryParams.categoryName" placeholder="请输入分类名称" clearable @keyup.enter="handleQuery" />
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-        <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-      </el-form-item>
-    </el-form>
+  <div class="category-container">
+    <div class="page-header">
+      <div>
+        <h2 class="page-title">分类管理</h2>
+        <p class="page-desc">用分层卡片视图管理产品分类和子分类结构</p>
+      </div>
+      <el-button type="primary" icon="Plus" size="large" @click="handleAdd">新增分类</el-button>
     </div>
 
-    <div class="action-bar">
-    <el-row :gutter="10">
-      <el-col :span="1.5">
-        <el-button type="primary" plain icon="Plus" @click="handleAdd">新增</el-button>
-      </el-col>
-      <el-col :span="1.5">
-        <el-button type="info" plain icon="Sort" @click="toggleExpandAll">展开/折叠</el-button>
-      </el-col>
-      <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
-    </el-row>
-    </div>
+    <el-card shadow="never" class="search-card">
+      <el-form :model="queryParams" ref="queryRef" :inline="true">
+        <el-form-item label="分类名称" prop="categoryName">
+          <el-input
+            v-model="queryParams.categoryName"
+            placeholder="搜索分类"
+            clearable
+            prefix-icon="Search"
+            @keyup.enter="handleQuery"
+          />
+        </el-form-item>
+        <el-form-item label="状态" prop="status">
+          <el-select v-model="queryParams.status" placeholder="状态" clearable>
+            <el-option
+              v-for="dict in sys_normal_disable"
+              :key="dict.value"
+              :label="dict.label"
+              :value="dict.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
+          <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
 
-    <div class="table-card">
-    <el-table v-if="refreshTable" v-loading="loading" :data="categoryList" row-key="categoryId" :default-expand-all="isExpandAll" :tree-props="{children: 'children', hasChildren: 'hasChildren'}">
-      <el-table-column prop="categoryName" label="分类名称" :show-overflow-tooltip="true" width="260"></el-table-column>
-      <el-table-column prop="categoryCode" label="分类编码" :show-overflow-tooltip="true"></el-table-column>
-      <el-table-column prop="sortOrder" label="排序" width="200"></el-table-column>
-      <el-table-column prop="status" label="状态" width="100">
-        <template #default="scope">
-          <dict-tag :options="sys_normal_disable" :value="scope.row.status"/>
-        </template>
-      </el-table-column>
-      <el-table-column label="创建时间" align="center" prop="createTime" width="200">
-        <template #default="scope">
-          <span>{{ parseTime(scope.row.createTime) }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
-        <template #default="scope">
-          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)">修改</el-button>
-          <el-button link type="primary" icon="Plus" @click="handleAdd(scope.row)">新增</el-button>
-          <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-    </div>
+    <el-card shadow="never" class="table-card" v-loading="loading">
+      <div class="category-overview">
+        <div class="overview-item">
+          <span class="overview-label">顶级分类</span>
+          <strong class="overview-value">{{ categoryList.length }}</strong>
+        </div>
+        <div class="overview-item">
+          <span class="overview-label">分类总数</span>
+          <strong class="overview-value">{{ totalCategories }}</strong>
+        </div>
+        <div class="overview-item">
+          <span class="overview-label">叶子节点</span>
+          <strong class="overview-value">{{ leafCategories }}</strong>
+        </div>
+      </div>
+
+      <CategoryBranch
+        v-if="!loading && categoryList.length"
+        :nodes="categoryList"
+        @add="handleAdd"
+        @edit="handleUpdate"
+        @delete="handleDelete"
+      />
+      <el-empty v-else-if="!loading" description="暂无分类数据" />
+    </el-card>
 
     <el-dialog :title="title" v-model="open" width="600px" append-to-body class="modern-dialog">
       <el-form ref="categoryRef" :model="form" :rules="rules" label-width="80px">
@@ -68,8 +81,8 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="显示排序" prop="sortOrder">
-              <el-input-number v-model="form.sortOrder" controls-position="right" :min="0" />
+            <el-form-item label="显示排序" prop="orderNum">
+              <el-input-number v-model="form.orderNum" controls-position="right" :min="0" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -94,6 +107,7 @@
 <script setup name="ProductCategory">
 import { listCategory, getCategory, delCategory, addCategory, updateCategory } from "@/api/product/category";
 import { handleTree } from "@/utils/jtcool";
+import CategoryBranch from "./CategoryBranch.vue";
 
 const { proxy } = getCurrentInstance();
 const { sys_normal_disable } = proxy.useDict("sys_normal_disable");
@@ -102,9 +116,6 @@ const categoryList = ref([]);
 const categoryOptions = ref([]);
 const open = ref(false);
 const loading = ref(true);
-const showSearch = ref(true);
-const isExpandAll = ref(true);
-const refreshTable = ref(true);
 const title = ref("");
 
 const data = reactive({
@@ -116,25 +127,20 @@ const data = reactive({
   rules: {
     categoryName: [{ required: true, message: "分类名称不能为空", trigger: "blur" }],
     categoryCode: [{ required: true, message: "分类编码不能为空", trigger: "blur" }],
-    sortOrder: [{ required: true, message: "显示排序不能为空", trigger: "blur" }]
+    orderNum: [{ required: true, message: "显示排序不能为空", trigger: "blur" }]
   }
 });
 
 const { queryParams, form, rules } = toRefs(data);
+
+const totalCategories = computed(() => countCategories(categoryList.value));
+const leafCategories = computed(() => countLeaves(categoryList.value));
 
 function getList() {
   loading.value = true;
   listCategory(queryParams.value).then(response => {
     categoryList.value = handleTree(response.rows, "categoryId", "parentId");
     loading.value = false;
-  });
-}
-
-function toggleExpandAll() {
-  refreshTable.value = false;
-  isExpandAll.value = !isExpandAll.value;
-  nextTick(() => {
-    refreshTable.value = true;
   });
 }
 
@@ -149,7 +155,7 @@ function reset() {
     parentId: 0,
     categoryName: undefined,
     categoryCode: undefined,
-    sortOrder: 0,
+    orderNum: 0,
     status: "0"
   };
   proxy.resetForm("categoryRef");
@@ -180,7 +186,7 @@ function getTreeselect() {
   listCategory().then(response => {
     categoryOptions.value = [];
     const data = { categoryId: 0, categoryName: '主类目', children: [] };
-    data.children = handleTree(response.data, "categoryId", "parentId");
+    data.children = handleTree(response.rows, "categoryId", "parentId");
     categoryOptions.value.push(data);
   });
 }
@@ -224,9 +230,90 @@ function handleDelete(row) {
   }).catch(() => {});
 }
 
+function countCategories(nodes = []) {
+  return nodes.reduce((total, item) => {
+    return total + 1 + countCategories(item.children || []);
+  }, 0);
+}
+
+function countLeaves(nodes = []) {
+  return nodes.reduce((total, item) => {
+    if (item.children?.length) {
+      return total + countLeaves(item.children);
+    }
+    return total + 1;
+  }, 0);
+}
+
 getList();
 </script>
 
-<style lang="scss" scoped>
-@import "@/assets/styles/modern-page.scss";
+<style scoped lang="scss">
+.category-container {
+  padding: 20px;
+  background: #f5f7fa;
+  min-height: calc(100vh - 84px);
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+
+.page-title {
+  margin: 0 0 6px;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.page-desc {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.search-card,
+.table-card {
+  margin-bottom: 16px;
+  border-radius: 12px;
+  border: 0;
+}
+
+.category-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.overview-item {
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f8fafc 0%, #eef5ff 100%);
+  border: 1px solid #e2e8f0;
+}
+
+.overview-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.overview-value {
+  font-size: 28px;
+  line-height: 1;
+  color: #0f172a;
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
 </style>
