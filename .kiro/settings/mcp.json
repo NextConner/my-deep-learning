@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "excail": {
+      "command": "npx",
+      "args": ["-y", "excalidraw-mcp"],
+      "env": {
+        "LOG_LEVEL": "ERROR"
+      },
+      "disabled": false,
+      "autoApprove": []
+    }
+  }
+}

@@ -43,7 +43,20 @@
       "Bash(git reset:*)",
       "Bash(chmod:*)",
       "Bash(\"D:\\\\github\\\\dev-deep-learning\\\\jtcool-server\\\\sql\\\\test_data.sql\":*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "WebFetch(domain:mcp.excalidraw.com)",
+      "WebSearch",
+      "Skill(update-config)",
+      "mcp__excalidraw__create_element",
+      "mcp__excalidraw__get_resource",
+      "mcp__excalidraw__query_elements",
+      "Bash(python generate_excalidraw.py)",
+      "Bash(ls -lh *.excalidraw)",
+      "Bash(find /Users/UserM -type d -name jtcool*)",
+      "Bash(xargs grep:*)",
+      "Bash(grep -r \"Micrometer\\\\|Prometheus\\\\|Zipkin\\\\|@Timed\\\\|@Counted\" /d/github/dev-deep-learning/jtcool-server --include=*.java)",
+      "Bash(ls -la docker-compose*.yml)",
+      "Bash(python generate_business_flow.py)"
     ]
   }
 }
