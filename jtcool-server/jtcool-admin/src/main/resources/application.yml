@@ -74,6 +74,11 @@ spring:
     restart:
       # 热部署开关
       enabled: true
+  # 缓存配置
+  cache:
+    type: redis
+    redis:
+      time-to-live: 3600000
   data:
     # redis 配置
     redis:
@@ -90,11 +95,11 @@ spring:
       lettuce:
         pool:
           # 连接池中的最小空闲连接
-          min-idle: 0
+          min-idle: 10
           # 连接池中的最大空闲连接
-          max-idle: 8
+          max-idle: 40
           # 连接池的最大数据库连接数
-          max-active: 8
+          max-active: 80
           # #连接池最大阻塞等待时间（使用负值表示没有限制）
           max-wait: -1ms
 
@@ -151,3 +156,12 @@ xss:
   excludes: /system/notice
   # 匹配链接
   urlPatterns: /system/*,/monitor/*,/tool/*
+
+# Resilience4j 限流配置
+resilience4j:
+  ratelimiter:
+    instances:
+      orderApi:
+        limit-for-period: 100
+        limit-refresh-period: 1s
+        timeout-duration: 500ms
